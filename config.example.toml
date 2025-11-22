@@ -1,0 +1,8 @@
+max_new_tokens = 1000
+
+[draft]
+model_name = "google-t5/t5-small"
+
+[verify]
+model_name = "google-t5/t5-base"
+decode_method = "greedy"  # Options: "greedy", "stochastic"
