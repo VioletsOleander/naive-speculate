@@ -1,24 +1,23 @@
+from typing import TypeAlias
+
 import torch
-from transformers import T5ForConditionalGeneration, T5TokenizerFast
-from transformers.generation.utils import GenerateEncoderDecoderOutput
+from transformers.generation.utils import GenerateDecoderOnlyOutput
 
 from naive_speculate.utils import Config
 
 from .draft import Drafter
 
+ModelOutputType: TypeAlias = GenerateDecoderOnlyOutput
+
 
 class Verifier(Drafter):
-    config: Config
-    model: T5ForConditionalGeneration
-    tokenizer: T5TokenizerFast
-
     def __init__(self, config: Config):
         super().__init__(config)
 
     def _greedy_decode(
         self,
-        draft_output: GenerateEncoderDecoderOutput,
-        model_output: GenerateEncoderDecoderOutput,
+        draft_output: ModelOutputType,
+        model_output: ModelOutputType,
     ) -> torch.Tensor:
         draft_ids = draft_output.sequences[0]
         model_ids = model_output.sequences[0]
@@ -28,8 +27,8 @@ class Verifier(Drafter):
 
     def _stochastic_decode(
         self,
-        draft_output: GenerateEncoderDecoderOutput,
-        model_output: GenerateEncoderDecoderOutput,
+        draft_output: ModelOutputType,
+        model_output: ModelOutputType,
     ):
         assert draft_output.scores is not None
         proposal_distributions = torch.cat(draft_output.scores, dim=0).softmax(dim=-1)
@@ -47,9 +46,9 @@ class Verifier(Drafter):
             f"Target Distribution: {target_distribution}, shape: {target_distribution.shape}"
         )
 
-    def verify(self, draft: GenerateEncoderDecoderOutput, context: str) -> str:
+    def verify(self, draft: ModelOutputType, context: str) -> str:
         model_input = self.tokenize([context])
-        model_output: GenerateEncoderDecoderOutput = self.model.generate(**model_input)  # type: ignore
+        model_output: ModelOutputType = self.model.generate(**model_input)  # type: ignore
 
         match self.config.decode_method:
             case "greedy":
