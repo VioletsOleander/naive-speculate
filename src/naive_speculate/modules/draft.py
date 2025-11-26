@@ -19,7 +19,6 @@ class Drafter:
 
     def __init__(self, config: Config):
         self.config = config
-        self.context_lengths = []
 
         self.model = ModelType.from_pretrained(
             config.drafter_model_name, device_map="auto", dtype="auto"
@@ -81,9 +80,9 @@ class Drafter:
         """
         return self.tokenizer.batch_decode(token_ids, skip_special_tokens=False)
 
-    def apply_chat_template(self, input_text: list[dict[str, str]]) -> str:
+    def apply_chat_template(self, messages: list[dict[str, str]]) -> str:
         text = self.tokenizer.apply_chat_template(
-            input_text,
+            messages,
             tokenize=False,
             add_generation_prompt=True,
             enable_thinking=False,

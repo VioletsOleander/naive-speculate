@@ -4,12 +4,20 @@ from transformers import BatchEncoding, GenerationConfig
 
 from naive_speculate.utility import Config
 
-from .draft import Drafter, ModelOutputType
+from .draft import Drafter, ModelOutputType, ModelType, TokenizerType
 
 
 class Verifier(Drafter):
     def __init__(self, config: Config):
-        super().__init__(config)
+        self.config = config
+
+        self.model = ModelType.from_pretrained(
+            config.verifier_model_name, device_map="auto", dtype="auto"
+        )
+        self._prepare_generation_config()
+
+        self.tokenizer = TokenizerType.from_pretrained(config.verifier_model_name)
+        self.tokenizer.padding_side = "left"
 
     def _greedy_decode(
         self,
