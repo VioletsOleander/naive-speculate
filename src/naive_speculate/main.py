@@ -5,7 +5,7 @@ from torch import Tensor
 
 from naive_speculate.modules.draft import Drafter
 from naive_speculate.modules.verify import Verifier
-from naive_speculate.utility import Config, Timer
+from naive_speculate.utility import Config
 
 
 def parse_args():

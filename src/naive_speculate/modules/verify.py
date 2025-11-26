@@ -66,9 +66,13 @@ class Verifier(Drafter):
             max_new_tokens=1,
         )
         # incorrect logic here, need fix
-        model_output: ModelOutputType = self.model.generate(
-            **model_input, generation_config=verify_config, use_model_defaults=True  # type: ignore
+        model_output = self.model.generate(
+            **model_input,  # type: ignore
+            generation_config=verify_config,
+            use_model_defaults=True,
         )
+        assert isinstance(model_output, ModelOutputType)
+
         match self.config.decode_method:
             case "greedy":
                 verified_ids = self._greedy_decode(draft, model_output)

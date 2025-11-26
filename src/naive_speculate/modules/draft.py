@@ -3,13 +3,14 @@ from typing import TypeAlias
 import torch
 import transformers
 from torch import Tensor
-from transformers import BatchEncoding
+from transformers import BatchEncoding, Qwen2TokenizerFast, Qwen3ForCausalLM
+from transformers.generation.utils import GenerateDecoderOnlyOutput
 
 from naive_speculate.utility.config import Config
 
-ModelType: TypeAlias = transformers.Qwen3ForCausalLM
-TokenizerType: TypeAlias = transformers.Qwen2TokenizerFast
-ModelOutputType: TypeAlias = transformers.generation.utils.GenerateDecoderOnlyOutput
+ModelType: TypeAlias = Qwen3ForCausalLM
+TokenizerType: TypeAlias = Qwen2TokenizerFast
+ModelOutputType: TypeAlias = GenerateDecoderOnlyOutput
 
 
 class Drafter:
@@ -53,9 +54,12 @@ class Drafter:
         draft_config = transformers.GenerationConfig(
             max_new_tokens=self.config.draft_tokens_num,
         )
-        draft: ModelOutputType = self.model.generate(
-            **model_input, generation_config=draft_config, use_model_defaults=True  # type: ignore
+        draft = self.model.generate(
+            **model_input,  # type: ignore
+            generation_config=draft_config,
+            use_model_defaults=True,
         )
+        assert isinstance(draft, ModelOutputType)
         return draft
 
     def tokenize(self, input_texts: list[str]) -> BatchEncoding:
