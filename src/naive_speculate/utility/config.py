@@ -2,8 +2,6 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-from idna import decode
-
 
 @dataclass
 class Config:
@@ -11,6 +9,7 @@ class Config:
     verifier_model_name: str = ""
     max_new_tokens: int = 0
     decode_method: str = ""
+    draft_tokens_num: int = 0
 
     @staticmethod
     def from_file(config_path: str) -> Config:
@@ -21,7 +20,8 @@ class Config:
             "drafter_model_name": config_dict["draft"]["model_name"],
             "verifier_model_name": config_dict["verify"]["model_name"],
             "max_new_tokens": config_dict["max_new_tokens"],
-            "decode_method": config_dict["verify"]["decode_method"],
+            "decode_method": config_dict["decode_method"],
+            "draft_tokens_num": config_dict["draft"]["draft_tokens_num"],
         }
 
         config = Config(**config_dict)
@@ -42,3 +42,6 @@ class Config:
 
         if self.max_new_tokens <= 0:
             raise ValueError("max_new_tokens must be a positive integer.")
+
+        if self.draft_tokens_num <= 0:
+            raise ValueError("draft_tokens_num must be a positive integer.")

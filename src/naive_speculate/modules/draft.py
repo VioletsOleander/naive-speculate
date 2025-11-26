@@ -1,22 +1,15 @@
-from re import M
-from sre_parse import Tokenizer
 from typing import TypeAlias
 
+import torch
+import transformers
 from torch import Tensor
-from transformers import (
-    AutoTokenizer,
-    BatchEncoding,
-    Qwen2TokenizerFast,
-    Qwen3ForCausalLM,
-)
-from transformers.generation.utils import GenerateEncoderDecoderOutput
+from transformers import BatchEncoding
 
-from naive_speculate.modules.verify import ModelOutputType
-from naive_speculate.utils.config import Config
+from naive_speculate.utility.config import Config
 
-ModelType: TypeAlias = Qwen3ForCausalLM
-TokenizerType: TypeAlias = Qwen2TokenizerFast
-ModelOutputType: TypeAlias = GenerateEncoderDecoderOutput
+ModelType: TypeAlias = transformers.Qwen3ForCausalLM
+TokenizerType: TypeAlias = transformers.Qwen2TokenizerFast
+ModelOutputType: TypeAlias = transformers.generation.utils.GenerateDecoderOnlyOutput
 
 
 class Drafter:
@@ -26,30 +19,82 @@ class Drafter:
 
     def __init__(self, config: Config):
         self.config = config
+        self.context_lengths = []
 
-        self.model = Qwen3ForCausalLM.from_pretrained(
+        self.model = ModelType.from_pretrained(
             config.drafter_model_name, device_map="auto", dtype="auto"
         )
-        assert self.model.generation_config is not None
-        self.model.generation_config.return_dict_in_generate = True
-        self.model.generation_config.output_scores = True
-        self.model.generation_config.max_new_tokens = 1000
+        self._prepare_generation_config()
 
-        self.tokenizer = AutoTokenizer.from_pretrained(config.drafter_model_name)
-        # self.tokenizer = Qwen2TokenizerFast.from_pretrained(config.drafter_model_name)
+        self.tokenizer = TokenizerType.from_pretrained(config.drafter_model_name)
         self.tokenizer.padding_side = "left"
 
-    def draft(self, model_input: BatchEncoding) -> GenerateEncoderDecoderOutput:
-        draft: GenerateEncoderDecoderOutput = self.model.generate(**model_input)  # type: ignore
+    def _prepare_generation_config(self):
+        assert self.model.generation_config is not None
+
+        self.model.generation_config.return_dict_in_generate = True
+        self.model.generation_config.output_scores = True
+        self.model.generation_config.max_new_tokens = self.config.max_new_tokens
+
+        match self.config.decode_method:
+            case "greedy":
+                self.model.generation_config.do_sample = False
+            case "stochastic":
+                self.model.generation_config.do_sample = True
+                self.model.generation_config.num_beams = 1
+
+    def draft(self, model_input: BatchEncoding) -> ModelOutputType:
+        """Generate draft sequences from the model given tokenized input.
+
+        Args:
+            model_input (BatchEncoding): Tokenized input sequences.
+        Returns:
+            ModelOutputType: Generated draft sequences and associated data.
+        """
+        draft_config = transformers.GenerationConfig(
+            max_new_tokens=self.config.draft_tokens_num,
+        )
+        draft: ModelOutputType = self.model.generate(
+            **model_input, generation_config=draft_config, use_model_defaults=True  # type: ignore
+        )
         return draft
 
     def tokenize(self, input_texts: list[str]) -> BatchEncoding:
-        return self.tokenizer(input_texts, return_tensors="pt", padding=True).to(
-            self.model.device
-        )
+        """Tokenize batch of input sequences using model's pre-trained tokenizer.
 
-    def detokenize(self, token_ids: list[int] | Tensor) -> list[str]:
-        return self.tokenizer.batch_decode(token_ids, skip_special_tokens=True)
+        Args:
+            input_texts (list[str]): List of input strings to tokenize.
+
+        Returns:
+            BatchEncoding: Tokenized inputs as a BatchEncoding object.
+        """
+        return self.tokenizer(input_texts, return_tensors="pt", padding=True)
+
+    def detokenize(self, token_ids: list[list[int]] | Tensor) -> list[str]:
+        """Detokenize batch of token ID sequences back into strings.
+
+        Args:
+            token_ids (list[list[int]] | Tensor): Batch of token ID sequences.
+
+        Returns:
+            list[str]: Detokenized strings.
+        """
+        return self.tokenizer.batch_decode(token_ids, skip_special_tokens=False)
+
+    def apply_chat_template(self, input_text: list[dict[str, str]]) -> str:
+        text = self.tokenizer.apply_chat_template(
+            input_text,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False,
+        )
+        assert isinstance(text, str)
+
+        return text
+
+    @property
+    def device(self) -> torch.device:
+        return self.model.device
 
     def __str__(self) -> str:
         string = f"Drafter(model_name={self.config.drafter_model_name})\nType: {type(self.model)}\n{self.model}"

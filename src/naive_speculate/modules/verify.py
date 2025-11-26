@@ -1,13 +1,10 @@
-from typing import TypeAlias
-
 import torch
-from transformers.generation.utils import GenerateDecoderOnlyOutput
+from torch import Tensor
+from transformers import BatchEncoding, GenerationConfig
 
-from naive_speculate.utils import Config
+from naive_speculate.utility import Config
 
-from .draft import Drafter
-
-ModelOutputType: TypeAlias = GenerateDecoderOnlyOutput
+from .draft import Drafter, ModelOutputType
 
 
 class Verifier(Drafter):
@@ -19,10 +16,20 @@ class Verifier(Drafter):
         draft_output: ModelOutputType,
         model_output: ModelOutputType,
     ) -> torch.Tensor:
+        """Perform greedy decoding verification.
+
+        Returns:
+            torch.Tensor: Verified token IDs. The shape is (1, sequence_length).
+        """
         draft_ids = draft_output.sequences[0]
         model_ids = model_output.sequences[0]
-        matches = draft_ids == model_ids
-        verified_ids = model_ids[: torch.argmin(matches.to(torch.uint8))]
+        matches = draft_ids == model_ids[:-1]
+
+        if matches.all():
+            verified_ids = model_ids
+        else:
+            verified_ids = model_ids[: torch.argmin(matches.to(torch.uint8))]
+
         return verified_ids[None, :]
 
     def _stochastic_decode(
@@ -46,19 +53,20 @@ class Verifier(Drafter):
             f"Target Distribution: {target_distribution}, shape: {target_distribution.shape}"
         )
 
-    def verify(self, draft: ModelOutputType, context: str) -> str:
-        model_input = self.tokenize([context])
-        model_output: ModelOutputType = self.model.generate(**model_input)  # type: ignore
-
+    def verify(self, draft: ModelOutputType, model_input: BatchEncoding) -> Tensor:
+        verify_config = GenerationConfig(
+            max_new_tokens=1,
+        )
+        model_output: ModelOutputType = self.model.generate(
+            **model_input, generation_config=verify_config, use_model_defaults=True  # type: ignore
+        )
         match self.config.decode_method:
             case "greedy":
                 verified_ids = self._greedy_decode(draft, model_output)
             # case "stochastic":
             #     self._stochastic_decode(draft, model_output)
 
-        verified_text = self.detokenize(verified_ids)[0]
-
-        return verified_text
+        return verified_ids
 
     def __str__(self) -> str:
         string = f"Verifier(model_name={self.config.verifier_model_name})\nType: {type(self.model)}\n{self.model}"
