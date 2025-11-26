@@ -65,6 +65,7 @@ class Verifier(Drafter):
         verify_config = GenerationConfig(
             max_new_tokens=1,
         )
+        # incorrect logic here, need fix
         model_output: ModelOutputType = self.model.generate(
             **model_input, generation_config=verify_config, use_model_defaults=True  # type: ignore
         )
