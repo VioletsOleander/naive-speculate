@@ -1,8 +1,9 @@
-max_new_tokens = 1000
+max_new_tokens = 32768
+decode_method = "greedy"  # Options: "greedy", "stochastic"
 
 [draft]
 model_name = "Qwen/Qwen3-0.6B"
+draft_tokens_num = 100
 
 [verify]
 model_name = "Qwen/Qwen3-1.7B"
-decode_method = "greedy"  # Options: "greedy", "stochastic"
