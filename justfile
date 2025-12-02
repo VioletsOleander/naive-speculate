@@ -1,11 +1,14 @@
 get-models:
     uv run hf download Qwen/Qwen3-0.6B
     uv run hf download Qwen/Qwen3-1.7B
+    uv run hf download Qwen/Qwen3-4B
+    uv run hf download Qwen/Qwen3-8B
 
 get-tools:
     uv tool install ruff
     uv tool install isort
     uv tool install ty
+    uv tool install prek
 
 lint:
     uv run ruff check
