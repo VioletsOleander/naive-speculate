@@ -10,7 +10,7 @@ TokenizerType: TypeAlias = Qwen2TokenizerFast
 class Tokenizer:
     """
     Wrapper class for tokenizer of drafter and verifier. It is assumed that drafter and verifier
-    shared the same tokenizer.
+    share the same tokenizer.
     """
 
     tokenizer: TokenizerType
@@ -39,6 +39,7 @@ class Tokenizer:
 
         Args:
             token_ids (list[list[int]] | Tensor): Batch of token ID sequences.
+            skip_special_tokens (bool): Whether to skip special tokens during decoding. Defaults to False.
 
         Returns:
             list[str]: Detokenized strings.
@@ -55,6 +56,7 @@ class Tokenizer:
         Args:
             messages (list[dict[str, str]]): List of chat messages, where each message is a dict
                 with keys "role" and "content".
+            enable_thinking (bool): Whether to enable thinking mode in the chat template. Defaults to True.
 
         Returns:
             str: Constructed prompt text.
