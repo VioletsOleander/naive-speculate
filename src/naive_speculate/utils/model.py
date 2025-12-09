@@ -73,7 +73,7 @@ class QwenModel:
             # kv_cache is updated inside model.forward as a side effect
             outputs = self.model.forward(
                 input_ids=cast(torch.LongTensor, input_ids[:, -1:]),
-                attention_mask=torch.ones_like(input_ids),
+                attention_mask=torch.ones_like(input_ids[:, -1:]),
                 logits_to_keep=1,
                 use_cache=True,
                 past_key_values=self.kv_cache,
