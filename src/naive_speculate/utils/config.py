@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 @dataclass
-class Config:
+class SpeculateConfig:
     drafter_model_name: str = ""
     verifier_model_name: str = ""
     max_new_tokens: int = 0
@@ -12,7 +12,7 @@ class Config:
     draft_tokens_num: int = 0
 
     @staticmethod
-    def from_file(config_path: str) -> Config:
+    def from_file(config_path: str) -> SpeculateConfig:
         with open(Path(config_path), "rb") as f:
             config_dict = tomllib.load(f)
 
@@ -24,7 +24,13 @@ class Config:
             "draft_tokens_num": config_dict["draft"]["draft_tokens_num"],
         }
 
-        config = Config(**config_dict)
+        config = SpeculateConfig(**config_dict)
+        config.validate_self()
+        return config
+
+    @staticmethod
+    def from_dict(config_dict: dict) -> SpeculateConfig:
+        config = SpeculateConfig(**config_dict)
         config.validate_self()
         return config
 
