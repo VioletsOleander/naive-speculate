@@ -105,7 +105,7 @@ class QwenModel:
             next_token_logits = outputs.logits[:, -1, :].to(
                 copy=True, dtype=torch.float32
             )
-            print(f"Iteration {num_new_tokens}: next_token_logits={next_token_logits}")
+            # Debug print removed for production
             next_token_ids = self._sample(next_token_logits, decode_method)
 
             if streamer is not None:
