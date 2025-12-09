@@ -24,9 +24,7 @@ class SpeculateConfig:
             "draft_tokens_num": config_dict["draft"]["draft_tokens_num"],
         }
 
-        config = SpeculateConfig(**config_dict)
-        config.validate_self()
-        return config
+        return SpeculateConfig.from_dict(config_dict)
 
     @staticmethod
     def from_dict(config_dict: dict) -> SpeculateConfig:
