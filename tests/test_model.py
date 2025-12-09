@@ -51,7 +51,6 @@ def test_model(hf_model: Qwen3ForCausalLM, custom_model: QwenModel):
     input_ids = torch.randint(
         0, hf_model.config.vocab_size, (1, CONFIG_DICT["prompt_length"])
     )
-    print("Input IDs:", input_ids)
 
     custom_outputs = custom_model.inference(
         input_ids=input_ids,
