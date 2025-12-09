@@ -4,42 +4,37 @@ from transformers import Qwen3ForCausalLM
 
 from naive_speculate.utils import QwenModel
 
-CONFIG_DICT = {
-    "model_name": "Qwen/Qwen3-0.6B",
-    "max_new_tokens": 10,
-    "decode_method": "greedy",
-    "prompt_length": 16,
-}
+MODEL_NAME = "Qwen/Qwen3-0.6B"
+MAX_NEW_TOKENS = 10
+PROMPT_LENGTH = 16
 
 
 @pytest.fixture
 def hf_model() -> Qwen3ForCausalLM:
-    return Qwen3ForCausalLM.from_pretrained(
-        CONFIG_DICT["model_name"], local_files_only=True
-    )
+    return Qwen3ForCausalLM.from_pretrained(MODEL_NAME, local_files_only=True)
 
 
 @pytest.fixture
 def custom_model() -> QwenModel:
-    return QwenModel(CONFIG_DICT["model_name"])
+    return QwenModel(MODEL_NAME)
 
 
 def test_self_consistency(custom_model: QwenModel):
     """Verify that the model produces consistent outputs across multiple runs with the same input."""
     input_ids = torch.randint(
-        0, custom_model.model.config.vocab_size, (1, CONFIG_DICT["prompt_length"])
+        0, custom_model.model.config.vocab_size, (1, PROMPT_LENGTH)
     )
 
     output1 = custom_model.inference(
         input_ids=input_ids,
-        max_new_tokens=CONFIG_DICT["max_new_tokens"],
+        max_new_tokens=MAX_NEW_TOKENS,
         decode_method="greedy",
     )
 
     custom_model.kv_cache.crop(0)
     output2 = custom_model.inference(
         input_ids=input_ids,
-        max_new_tokens=CONFIG_DICT["max_new_tokens"],
+        max_new_tokens=MAX_NEW_TOKENS,
         decode_method="greedy",
     )
 
@@ -48,13 +43,11 @@ def test_self_consistency(custom_model: QwenModel):
 
 def test_model(hf_model: Qwen3ForCausalLM, custom_model: QwenModel):
     """Verify that the custom model's outputs match those of the Hugging Face model."""
-    input_ids = torch.randint(
-        0, hf_model.config.vocab_size, (1, CONFIG_DICT["prompt_length"])
-    )
+    input_ids = torch.randint(0, hf_model.config.vocab_size, (1, PROMPT_LENGTH))
 
     custom_outputs = custom_model.inference(
         input_ids=input_ids,
-        max_new_tokens=CONFIG_DICT["max_new_tokens"],
+        max_new_tokens=MAX_NEW_TOKENS,
         decode_method="greedy",
     )
 
@@ -63,7 +56,7 @@ def test_model(hf_model: Qwen3ForCausalLM, custom_model: QwenModel):
     hf_outputs = hf_model.generate(
         input_ids=input_ids,
         attention_mask=torch.ones_like(input_ids),
-        max_new_tokens=CONFIG_DICT["max_new_tokens"],
+        max_new_tokens=MAX_NEW_TOKENS,
         do_sample=False,
         use_cache=True,
         past_key_values=custom_model.kv_cache,
