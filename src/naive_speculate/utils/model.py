@@ -5,12 +5,32 @@ from transformers import DynamicCache, Qwen3ForCausalLM, TextStreamer
 
 
 class QwenModel:
-    """Wrapper class for Qwen model."""
+    """
+    Wrapper class for Qwen3ForCausalLM that provides convenient methods for model loading,
+    inference with key-value (KV) caching, and support for different decoding methods.
 
-    model: Qwen3ForCausalLM
-    kv_cache: DynamicCache
-    eos_token_id: int
+    This class handles:
+        - Loading a Qwen3ForCausalLM model from a given model name.
+        - Managing the model's KV cache for efficient autoregressive inference.
+        - Performing inference using either greedy or random decoding.
+        - Streaming output tokens via an optional TextStreamer.
 
+    Key parameters:
+        - model_name (str): Name or path of the pretrained Qwen model to load.
+        - decode_method (str): Decoding strategy, either "greedy" or "random".
+        - max_new_tokens (int): Maximum number of tokens to generate.
+        - streamer (TextStreamer, optional): If provided, streams generated tokens.
+
+    Example usage:
+        >>> model = QwenModel("Qwen/Qwen1.5-0.5B")
+        >>> input_ids = tokenizer("Hello, world!", return_tensors="pt").input_ids
+        >>> output_ids = model.inference(input_ids, max_new_tokens=20, decode_method="greedy")
+
+    Attributes:
+        model (Qwen3ForCausalLM): The underlying Qwen model.
+        kv_cache (DynamicCache): KV cache for efficient decoding.
+        eos_token_id (int): End-of-sequence token id.
+    """
     def __init__(self, model_name: str):
         self.model = Qwen3ForCausalLM.from_pretrained(
             model_name,
