@@ -21,5 +21,5 @@ format-check:
 
 check: format-check lint
 
-infer $PYTHONOPTIMIZE="1" config="config.toml" :
+infer $PYTHONOPTIMIZE="1" config="config.toml":
     uv run infer {{config}}
