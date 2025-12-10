@@ -6,11 +6,6 @@ repos:
         entry: uv run ruff format --check
         language: unsupported
         types: [python]
-      - id: isort-check
-        name: isort Check
-        entry: uv run isort --check
-        language: unsupported
-        types: [python]
       - id: ruff-lint
         name: Ruff Lint
         entry: uv run ruff check
