@@ -6,7 +6,6 @@ get-models:
 
 get-tools:
     uv tool install ruff
-    uv tool install isort
     uv tool install ty
     uv tool install prek
 
@@ -16,13 +15,11 @@ lint:
 
 format:
     uv run ruff format
-    uv run isort .
 
 format-check:
    uv run ruff format --check
-   uv run isort --check .
 
 check: format-check lint
 
-infer config="config.example.toml":
+infer $PYTHONOPTIMIZE="1" config="config.toml" :
     uv run infer {{config}}
