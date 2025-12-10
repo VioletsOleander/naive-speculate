@@ -52,7 +52,7 @@ class QwenModel:
         max_new_tokens: int,
         decode_method: str,
         streamer: TextStreamer | None = None,
-    ):
+    ) -> torch.Tensor:
         if max_new_tokens <= 0:
             return input_ids
 
@@ -82,7 +82,7 @@ class QwenModel:
         max_new_tokens: int,
         decode_method: str,
         streamer: TextStreamer | None = None,
-    ):
+    ) -> torch.Tensor:
         if max_new_tokens <= 0:
             if streamer is not None:
                 streamer.end()
