@@ -1,7 +1,7 @@
 from typing import Literal, overload
 
 from torch import Tensor
-from transformers import BatchEncoding, PreTrainedTokenizerFast
+from transformers import AutoTokenizer, BatchEncoding, PreTrainedTokenizerFast
 
 from .config import SpeculateConfig
 
@@ -15,9 +15,10 @@ class Tokenizer:
     tokenizer: PreTrainedTokenizerFast
 
     def __init__(self, config: SpeculateConfig):
-        self.tokenizer = PreTrainedTokenizerFast.from_pretrained(
+        self.tokenizer = AutoTokenizer.from_pretrained(
             config.drafter_model_name, local_files_only=True
         )
+        assert isinstance(self.tokenizer, PreTrainedTokenizerFast)
         self.tokenizer.padding_side = "left"
 
     @overload
@@ -41,7 +42,7 @@ class Tokenizer:
         self, input_texts: list[str], return_tensors: bool = True
     ) -> BatchEncoding | tuple[Tensor, Tensor]:
         """Tokenize a batch of input sequences into token ID sequences.
-        Returns either a BatchEncoding object or a tuple of tensors (input_ids and attention_mask) based on output_tensors flag.
+        Returns either a BatchEncoding object or a tuple of tensors (input_ids and attention_mask) based on return_tensors flag.
 
         Args:
             input_texts (list[str]): List of input strings to tokenize.
@@ -54,13 +55,13 @@ class Tokenizer:
 
         if not return_tensors:
             return tokenized
-        else:
-            input_ids = tokenized["input_ids"]
-            attention_mask = tokenized["attention_mask"]
 
-            assert isinstance(input_ids, Tensor)
-            assert isinstance(attention_mask, Tensor)
-            return input_ids, attention_mask
+        input_ids = tokenized["input_ids"]
+        attention_mask = tokenized["attention_mask"]
+
+        assert isinstance(input_ids, Tensor)
+        assert isinstance(attention_mask, Tensor)
+        return input_ids, attention_mask
 
     def detokenize(
         self, token_ids: list[list[int]], skip_special_tokens: bool = False
