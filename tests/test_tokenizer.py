@@ -1,5 +1,4 @@
 import pytest
-from torch import Tensor
 
 from naive_speculate.utils import SpeculateConfig, Tokenizer
 
@@ -42,13 +41,7 @@ def test_tokenizer(tokenizer: Tokenizer, text: str) -> None:
     Ensures that text generated from chat messages, when tokenized and then detokenized,
     matches the original text.
     """
-    tokenized = tokenizer.tokenize([text])
-
-    input_ids = tokenized["input_ids"]
-    attention_mask = tokenized["attention_mask"]
-    assert isinstance(input_ids, Tensor)
-    assert isinstance(attention_mask, Tensor)
-
+    input_ids, _ = tokenizer.tokenize([text])
     detokenized = tokenizer.detokenize(input_ids.tolist())[0]
 
     assert detokenized == text
