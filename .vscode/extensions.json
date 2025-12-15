@@ -3,5 +3,7 @@
         "ms-python.black-formatter",
         "ms-python.isort",
         "ms-python.python",
+        "charliermarsh.ruff",
+        "astral-sh.ty",
     ],
 }
