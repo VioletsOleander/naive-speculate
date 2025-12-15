@@ -83,9 +83,9 @@ class QwenModel:
             torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Generated token IDs, and optionally logits.
         """
         if max_new_tokens <= 0:
-            if streamer is not None:
-                streamer.end()
-            return input_ids
+            if not output_logits:
+                return input_ids
+            return input_ids, torch.empty(0, device=self.device)
 
         # 1. Forward
         # kv_cache is updated inside model.forward as a side effect
@@ -162,10 +162,12 @@ class QwenModel:
             streamer (TextStreamer | None): Optional streamer for output tokens.
 
         Returns:
-            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Generated token IDs, and optionally logits
+            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Generated token IDs, and optionally logits.
         """
         if max_new_tokens <= 0:
-            return input_ids
+            if not output_logits:
+                return input_ids
+            return input_ids, torch.empty(0, device=self.device)
 
         num_new_tokens = 0
         logits = []
@@ -197,9 +199,6 @@ class QwenModel:
                 or next_token_ids[0, 0].item() == self.model_config.eos_token_id
             ):
                 break
-
-        if streamer is not None:
-            streamer.end()
 
         if not output_logits:
             return input_ids
@@ -248,6 +247,9 @@ class QwenModel:
             decode_method=decode_method,
             streamer=streamer,
         )
+
+        if streamer is not None:
+            streamer.end()
         return output_ids
 
     @property
