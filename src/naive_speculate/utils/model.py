@@ -204,7 +204,7 @@ class QwenModel:
             return input_ids
         else:
             # the huggingface generate API returns tuple of tensors directly
-            # here, we additionaly concatenate along seq_len dimension to maintain API consistency with prefill
+            # here, we additionally concatenate along seq_len dimension to maintain API consistency with prefill
             # but notice additional cost with tensor allocation and copy is incurred
             return input_ids, torch.cat(logits, dim=1)
 
