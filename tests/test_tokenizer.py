@@ -36,8 +36,8 @@ def text(tokenizer: Tokenizer) -> str:
 
 
 def test_tokenizer(tokenizer: Tokenizer, text: str) -> None:
-    """
-    Verifies round-trip tokenization and detokenization integrity with chat templates.
+    """Verifies round-trip tokenization and detokenization integrity with chat templates.
+
     Ensures that text generated from chat messages, when tokenized and then detokenized,
     matches the original text.
     """

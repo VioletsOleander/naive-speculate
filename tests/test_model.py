@@ -9,22 +9,14 @@ MAX_NEW_TOKENS = 10
 PROMPT_LENGTH = 16
 
 
-@pytest.fixture
-def hf_model() -> Qwen3ForCausalLM:
-    return Qwen3ForCausalLM.from_pretrained(MODEL_NAME, local_files_only=True)
-
-
-@pytest.fixture
-def custom_model() -> QwenModel:
-    return QwenModel(MODEL_NAME)
-
-
+@pytest.mark.parametrize("custom_model", [MODEL_NAME], indirect=True)
 def test_self_consistency(custom_model: QwenModel):
     """Verify that the model produces consistent outputs across multiple runs with the same input."""
     input_ids = torch.randint(
         0, custom_model.model.config.vocab_size, (1, PROMPT_LENGTH)
     )
 
+    custom_model.kv_cache.crop(0)
     output1 = custom_model.inference(
         input_ids=input_ids,
         max_new_tokens=MAX_NEW_TOKENS,
@@ -41,17 +33,21 @@ def test_self_consistency(custom_model: QwenModel):
     assert torch.equal(output1, output2)
 
 
+@pytest.mark.parametrize(
+    "hf_model, custom_model", [(MODEL_NAME, MODEL_NAME)], indirect=True
+)
 def test_model(hf_model: Qwen3ForCausalLM, custom_model: QwenModel):
     """Verify that the custom model's outputs match those of the Hugging Face model."""
     input_ids = torch.randint(0, hf_model.config.vocab_size, (1, PROMPT_LENGTH))
 
+    custom_model.kv_cache.crop(0)
     custom_outputs = custom_model.inference(
         input_ids=input_ids,
         max_new_tokens=MAX_NEW_TOKENS,
         decode_method="greedy",
     )
 
-    # weirdly, if we don't let hf model reuse the kv_cache allocation from custom model, the outputs differ
+    # let hf model reuse the kv_cache allocation from custom model
     custom_model.kv_cache.crop(0)
     hf_outputs = hf_model.generate(
         input_ids=input_ids,
