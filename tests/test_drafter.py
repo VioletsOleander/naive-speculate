@@ -42,5 +42,5 @@ def test_drafter(drafter: Drafter, hf_model: Qwen3ForCausalLM):
     assert torch.equal(hf_outputs.sequences, draft_outputs)
 
     assert hf_outputs.logits is not None
-    hf_logits = torch.cat(hf_outputs.logits, dim=0).unsqueeze(0)
+    hf_logits = torch.stack(hf_outputs.logits, dim=1)
     assert torch.equal(candidate_logits, hf_logits)
