@@ -19,7 +19,7 @@ CONFIG_DICT = {
 @pytest.mark.parametrize(
     "drafter, hf_model", [(CONFIG_DICT, DRAFT_MODEL_NAME)], indirect=True
 )
-def test_drafter(drafter: Drafter, hf_model: Qwen3ForCausalLM):
+def test_drafter(drafter: Drafter, hf_model: Qwen3ForCausalLM) -> None:
     """Verify drafter model outputs match HuggingFace model outputs."""
     input_ids = torch.randint(0, hf_model.config.vocab_size, (1, PROMPT_LENGTH))
 

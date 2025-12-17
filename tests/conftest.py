@@ -2,7 +2,8 @@ import pytest
 from transformers import Qwen3ForCausalLM
 
 from naive_speculate.draft import Drafter
-from naive_speculate.utils import QwenModel, SpeculateConfig
+from naive_speculate.models import QwenModel
+from naive_speculate.utils import SpeculateConfig
 
 
 @pytest.fixture(scope="session")

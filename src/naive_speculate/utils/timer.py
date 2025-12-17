@@ -7,14 +7,14 @@ class Timer:
     end: float
     elapsed: float
 
-    def __init__(self, name):
+    def __init__(self, name) -> None:
         self.name = name
 
-    def __enter__(self):
+    def __enter__(self) -> Timer:
         self.start = perf_counter()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
         self.end = perf_counter()
         self.elapsed = self.end - self.start
         return False

@@ -2,7 +2,7 @@ import pytest
 import torch
 from transformers import Qwen3ForCausalLM
 
-from naive_speculate.utils import QwenModel
+from naive_speculate.models import QwenModel
 
 MODEL_NAME = "Qwen/Qwen3-0.6B"
 MAX_NEW_TOKENS = 10
@@ -10,7 +10,7 @@ PROMPT_LENGTH = 16
 
 
 @pytest.mark.parametrize("custom_model", [MODEL_NAME], indirect=True)
-def test_self_consistency(custom_model: QwenModel):
+def test_self_consistency(custom_model: QwenModel) -> None:
     """Verify that the model produces consistent outputs across multiple runs with the same input."""
     input_ids = torch.randint(
         0, custom_model.model.config.vocab_size, (1, PROMPT_LENGTH)
@@ -36,7 +36,7 @@ def test_self_consistency(custom_model: QwenModel):
 @pytest.mark.parametrize(
     "hf_model, custom_model", [(MODEL_NAME, MODEL_NAME)], indirect=True
 )
-def test_model(hf_model: Qwen3ForCausalLM, custom_model: QwenModel):
+def test_model(hf_model: Qwen3ForCausalLM, custom_model: QwenModel) -> None:
     """Verify that the custom model's outputs match those of the Hugging Face model."""
     input_ids = torch.randint(0, hf_model.config.vocab_size, (1, PROMPT_LENGTH))
 

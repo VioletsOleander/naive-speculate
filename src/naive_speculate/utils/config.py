@@ -12,6 +12,12 @@ class SpeculateConfig:
     draft_tokens_num: int = 0
 
     @staticmethod
+    def from_dict(config_dict: dict) -> SpeculateConfig:
+        config = SpeculateConfig(**config_dict)
+        config.validate_self()
+        return config
+
+    @staticmethod
     def from_file(config_path: str) -> SpeculateConfig:
         with open(Path(config_path), "rb") as f:
             config_dict = tomllib.load(f)
@@ -26,13 +32,7 @@ class SpeculateConfig:
 
         return SpeculateConfig.from_dict(config_dict)
 
-    @staticmethod
-    def from_dict(config_dict: dict) -> SpeculateConfig:
-        config = SpeculateConfig(**config_dict)
-        config.validate_self()
-        return config
-
-    def validate_self(self):
+    def validate_self(self) -> None:
         """Validate the configuration values.
 
         Raises:
