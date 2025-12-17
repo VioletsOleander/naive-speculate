@@ -10,5 +10,7 @@ wheels/
 !pyproject.toml
 !config.example.toml
 
+*.sh
+
 # Virtual environments
 .venv
