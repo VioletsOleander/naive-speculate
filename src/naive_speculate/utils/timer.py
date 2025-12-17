@@ -7,7 +7,7 @@ class Timer:
     end: float
     elapsed: float
 
-    def __init__(self, name) -> None:
+    def __init__(self, name: str) -> None:
         self.name = name
 
     def __enter__(self) -> Timer:
