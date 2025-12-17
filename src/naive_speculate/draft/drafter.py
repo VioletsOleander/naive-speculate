@@ -3,7 +3,8 @@ from logging import Logger
 import torch
 import transformers
 
-from naive_speculate.utils import QwenModel, SpeculateConfig
+from naive_speculate.models import QwenModel
+from naive_speculate.utils import SpeculateConfig
 
 
 class Drafter(QwenModel):
@@ -30,7 +31,7 @@ class Drafter(QwenModel):
         input_ids: torch.Tensor,
         streamer: transformers.TextStreamer | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Generate candidate tokens given the input_ids.
+        """Generate candidate tokens given the `input_ids`.
 
         Returns the generated tokens and their corresponding logits.
 
@@ -41,16 +42,15 @@ class Drafter(QwenModel):
         Returns:
             tuple[torch.Tensor, torch.Tensor]: A tuple containing the generated token IDs and their logits
         """
-        input_ids, candidate_logits = self.prefill(
+        input_ids, candidate_logits = self._prefill(
             input_ids=input_ids,
-            max_new_tokens=self.draft_tokens_num,
             decode_method=self.decode_method,
             output_logits=True,
             streamer=streamer,
         )
         new_token_logit = candidate_logits[:, -1:None, :]
 
-        input_ids, candidate_logits = self.decode(
+        input_ids, candidate_logits = self._decode(
             input_ids=input_ids,
             max_new_tokens=self.draft_tokens_num
             - 1,  # Already generated one token in prefill

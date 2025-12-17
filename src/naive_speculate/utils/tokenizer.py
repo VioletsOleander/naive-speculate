@@ -7,14 +7,17 @@ from .config import SpeculateConfig
 
 
 class Tokenizer:
-    """
-    Wrapper class for tokenizer of drafter and verifier. It is assumed that drafter and verifier
-    share the same tokenizer.
+    """Wrapper class for tokenizer of drafter and verifier.
+
+    It is assumed that drafter and verifier share the same tokenizer.
+
+    Attributes:
+        tokenizer (PreTrainedTokenizerFast): The tokenizer instance.
     """
 
     tokenizer: PreTrainedTokenizerFast
 
-    def __init__(self, config: SpeculateConfig):
+    def __init__(self, config: SpeculateConfig) -> None:
         self.tokenizer = AutoTokenizer.from_pretrained(
             config.drafter_model_name, local_files_only=True
         )
@@ -23,7 +26,7 @@ class Tokenizer:
 
     @overload
     def tokenize(
-        self, input_texts: list[str], return_tensors: Literal[True]
+        self, input_texts: list[str], return_tensors: Literal[True] = True
     ) -> tuple[Tensor, Tensor]: ...
 
     @overload
@@ -35,13 +38,14 @@ class Tokenizer:
     def tokenize(
         self,
         input_texts: list[str],
-        return_tensors: bool = True,
+        return_tensors: bool,
     ) -> BatchEncoding | tuple[Tensor, Tensor]: ...
 
     def tokenize(
         self, input_texts: list[str], return_tensors: bool = True
     ) -> BatchEncoding | tuple[Tensor, Tensor]:
         """Tokenize a batch of input sequences into token ID sequences.
+
         Returns either a BatchEncoding object or a tuple of tensors (input_ids and attention_mask) based on return_tensors flag.
 
         Args:
