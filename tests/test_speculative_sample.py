@@ -3,7 +3,7 @@ import torch
 
 from naive_speculate.verify import speculative_sample
 
-NUM_SAMPLES = 5000
+NUM_SAMPLES = 8000
 CHECK_INTERVAL = 500
 
 
@@ -43,7 +43,7 @@ def compute_kl_divergences(
         (50, 1),
         pytest.param(
             (10, 5),
-            marks=pytest.mark.skip(
+            marks=pytest.mark.xfail(
                 reason="Joint case needs more investigation",
             ),
         ),
@@ -93,9 +93,11 @@ def test_speculative_sample(
 
         # 3. Compute empirical distribution and compare to target
         if (sample_idx + 1) % CHECK_INTERVAL == 0:
-            empirical_dists = token_frequencies / (
-                sample_idx + 1
-            )  # TODO: might be incorrect for joint case
+            # normalize by the actual number of visits to each position
+            position_visits = token_frequencies.sum(
+                dim=-1, keepdim=True
+            )  # [draft_length, 1]
+            empirical_dists = token_frequencies / position_visits
 
             kl_divergences = compute_kl_divergences(
                 target_dists.squeeze(0), empirical_dists
