@@ -7,97 +7,99 @@ from naive_speculate.utils import SpeculateConfig
 
 
 def greedy_match(
-    target_dists: torch.Tensor, candidate_sequences: torch.Tensor
-) -> tuple[torch.Tensor, torch.Tensor | None]:
-    """Verify candidate samples against target distributions using greedy matching.
+    target_dists: torch.Tensor, candidate_tokens: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Verify candidate tokens against target distributions using greedy matching.
 
     Args:
-        target_dists (torch.Tensor): Target distributions of shape [batch_size, draft_tokens_num, vocab_size].
-        candidate_sequences (torch.Tensor): Candidate sequences of shape [batch_size, draft_tokens_num].
+        target_dists (torch.Tensor): Target distributions of shape [draft_tokens_num, vocab_size].
+        candidate_tokens (torch.Tensor): Candidate sequence of shape [draft_tokens_num].
 
     Returns:
-        rejected_idx (torch.Tensor): Indices of the first mismatched token for each batch. Shape: [batch_size].
-        equivalent to `candidate_sequences.shape[-1]`, i.e. the number of draft tokens, if no mismatch happens.
-        resampled_tokens (torch.Tensor | None): Greedy sampled tokens at the rejected positions. Shape: [batch_size].
-        equivalent to None if no mismatch happens.
+        rejected_idx (torch.Tensor): Index of the first mismatched token in the sequence. Scalar tensor with empty shape.
+          If no rejections happens, equal to `candidate_tokens.shape[0]`, i.e. the number of draft tokens.
+        resampled_token (torch.Tensor): Greedy sampled token at the rejected position. Scalar tensor with empty shape.
+          If no rejection happens, this will still be a valid tensor but should be ignored.
     """
-    assert target_dists.device == candidate_sequences.device
-    # target_dist: [batch_size, draft_tokens_num, vocab_size]
-    # candidate_sample: [batch_size, draft_tokens_num]
-    assert target_dists.shape[:-1] == candidate_sequences.shape
-    batch_size, draft_tokens_num, vocab_size = target_dists.shape
+    assert target_dists.device == candidate_tokens.device
+    # target_dist: [draft_tokens_num, vocab_size]
+    # candidate_tokens: [draft_tokens_num]
+    assert target_dists.shape[0] == candidate_tokens.shape[0]
+    draft_tokens_num, vocab_size = target_dists.shape
 
     # 1. Sample greedy tokens from target distribution
     greedy_tokens = torch.argmax(target_dists, dim=-1)
 
     # 2. Find the first mismatch position
-    matches = greedy_tokens == candidate_sequences
+    matches = greedy_tokens == candidate_tokens
     val, rejected_idx = torch.min(matches, dim=-1)
-    # if all match, set rejected_idx to draft_tokens_num
-    rejected_idx += val * draft_tokens_num
-    rejected_idx.squeeze_()
 
     # 3. If mismatch happens, get the greedy token at that position
-    resampled_tokens = None
-    if rejected_idx != draft_tokens_num:
-        resampled_tokens = greedy_tokens[:, rejected_idx]
+    # No conditional branch here to avoid device synchronization
+    resampled_token = greedy_tokens[rejected_idx]
 
-    return rejected_idx, resampled_tokens
+    # if all match, set rejected_idx to draft_tokens_num
+    rejected_idx += val * draft_tokens_num
+    return rejected_idx, resampled_token
 
 
 def speculative_sample(
-    proposal_dists: torch.Tensor,
     target_dists: torch.Tensor,
-    candidate_sequences: torch.Tensor,
-) -> tuple[torch.Tensor, torch.Tensor | None]:
+    proposal_dists: torch.Tensor,
+    candidate_tokens: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
     """Verify candidate samples against target distributions using speculative sampling.
 
     Args:
-        proposal_dists (torch.Tensor): Proposal distributions of shape [batch_size, draft_tokens_num, vocab_size].
-        target_dists (torch.Tensor): Target distributions of shape [batch_size, draft_tokens_num, vocab_size].
-        candidate_sequences (torch.Tensor): Candidate sequences of shape [batch_size, draft_tokens_num].
+        target_dists (torch.Tensor): Target distributions of shape [draft_tokens_num, vocab_size].
+        proposal_dists (torch.Tensor): Proposal distributions of shape [draft_tokens_num, vocab_size].
+        candidate_tokens (torch.Tensor): Candidate tokens of shape [draft_tokens_num].
 
     Returns:
-        rejected_idx (torch.Tensor): Indices of the first rejected token for each batch. Shape: [batch_size].
-        equivalent to `candidate_sequences.shape[-1]`, i.e. the number of draft tokens, if no rejection happens.
-        resampled_tokens (torch.Tensor | None): Resampled tokens at the rejected positions. Shape: [batch_size].
-        equivalent to None if no rejection happens.
+        rejected_idx (torch.Tensor): Index of the first rejected token. Scalar tensor with empty shape.
+          If no rejection happens, equal to `candidate_tokens.shape[0]`, i.e. the number of draft tokens.
+        resampled_token (torch.Tensor): Resampled token at the rejected position. Scalar tensor with empty shape.
+          If no rejection happens, this will still be a valid tensor but should be ignored.
     """
-    assert proposal_dists.device == target_dists.device == candidate_sequences.device
-    # proposal_dist, target_dist: [batch_size, draft_tokens_num, vocab_size]
-    # candidate_sample: [batch_size, draft_tokens_num]
+    assert proposal_dists.device == target_dists.device == candidate_tokens.device
+    # proposal_dist, target_dist: [draft_tokens_num, vocab_size]
+    # candidate_tokens: [draft_tokens_num]
     assert proposal_dists.shape == target_dists.shape
-    assert proposal_dists.shape[:-1] == candidate_sequences.shape
-    batch_size, draft_tokens_num, vocab_size = proposal_dists.shape
+    assert proposal_dists.shape[0] == candidate_tokens.shape[0]
+    draft_tokens_num, vocab_size = proposal_dists.shape
 
     # 1. Gather probabilities of tokens in candidate_sequences
     proposal_probs = torch.gather(
-        proposal_dists, 2, candidate_sequences.unsqueeze(-1)
+        proposal_dists, 1, candidate_tokens.unsqueeze(-1)
     ).squeeze(-1)
     target_probs = torch.gather(
-        target_dists, 2, candidate_sequences.unsqueeze(-1)
+        target_dists, 1, candidate_tokens.unsqueeze(-1)
     ).squeeze(-1)
 
     # 2. Find the first rejection position
-    accepted = torch.rand(
-        batch_size, draft_tokens_num, device=proposal_dists.device
-    ) < (target_probs / proposal_probs)
+    accepted = torch.rand(draft_tokens_num, device=proposal_dists.device) < (
+        target_probs / (proposal_probs + 1e-9)
+    )
     val, rejected_idx = torch.min(accepted, dim=-1)
+
+    # 3. If rejection happens, resample a token from the residual distribution
+    resample_dist = target_dists[rejected_idx] - proposal_dists[rejected_idx]
+    resample_dist = torch.clamp_(resample_dist, min=0.0)
+    resampled_token = torch.multinomial(resample_dist, num_samples=1).squeeze()
+
     # if all accepted, set rejected_idx to draft_tokens_num
     rejected_idx += val * draft_tokens_num
-    rejected_idx.squeeze_()
-
-    resampled_tokens = None
-    # 3. If rejection happens, resample a token from the residual distribution
-    if rejected_idx != draft_tokens_num:
-        resample_dist = target_dists[:, rejected_idx] - proposal_dists[:, rejected_idx]
-        resample_dist = torch.clamp_(resample_dist, min=0.0)
-        resampled_tokens = torch.multinomial(resample_dist, num_samples=1)
-
-    return rejected_idx, resampled_tokens
+    return rejected_idx, resampled_token
 
 
 class Verifier(QwenModel):
+    """Verifier model for speculative decoding.
+
+    Attributes:
+        logger (Logger | None): Logger for logging information.
+        decode_method (str): Decoding method to use during verification.
+    """
+
     logger: Logger | None
     decode_method: str
 
@@ -107,11 +109,44 @@ class Verifier(QwenModel):
         self.logger = logger
 
     @torch.no_grad()
-    def verify(self, draft_ids: torch.Tensor, draft_logits: torch.Tensor):
+    def verify(self, input_ids: torch.Tensor, draft_logits: torch.Tensor):
+        """Verify the candidate samples generated by the draft model.
+
+        Args:
+            input_ids (torch.Tensor): The input token IDs for the verifier model. Shape: [batch_size, seq_len].
+              Normally, just pass the output_ids generated by the drafter model's `drafter` method to it.
+            draft_logits (torch.Tensor): Logits of the candidate sequences generated by the draft model. Shape: [batch_size, draft_tokens_num, vocab_size].
+              Normally, just pass the output_logits generated by the drafter model's `drafter` method to it.
+
+        Returns:
+            output_ids (torch.Tensor): Output token IDs after verification.
+            output_logits (torch.Tensor): Output logits after verification.
+
+        Raises:
+            ValueError: If `self.decode_method` is not supported.
+        """
+        # 1. Prefill
         output_ids, output_logits = self._prefill(
-            input_ids=draft_ids, decode_method=self.decode_method, output_logits=True
+            input_ids=input_ids, decode_method=self.decode_method, output_logits=True
         )
-        print("shape of draft_ids:", draft_ids.shape)
-        print("shape of output_ids:", output_ids.shape)
-        print("shape of output_logits:", output_logits.shape)
-        print("shape of draft_logits:", draft_logits.shape)
+
+        # 2. Verify
+        # draft_length = draft_logits.shape[1]
+        # target_dists = output_logits[:, -draft_length:, :]
+        # proposal_dists = draft_logits
+        # candidiate_sequences = input_ids[:, -draft_length:]
+
+        # match self.decode_method:
+        #     case "greedy":
+        #         rejected_idx, resampled_tokens = greedy_match(
+        #             target_dists=target_dists,
+        #             candidate_sequences=candidiate_sequences,
+        #         )
+        #     case "random":
+        #         rejected_idx, resampled_tokens = speculative_sample(
+        #             target_dists=target_dists,
+        #             proposal_dists=proposal_dists,
+        #             candidate_sequences=candidiate_sequences,
+        #         )
+        #     case _:
+        #         raise ValueError(f"Unsupported decode method: {self.decode_method}")
