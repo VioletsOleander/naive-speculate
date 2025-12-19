@@ -16,8 +16,8 @@ def target_and_proposal_dists(
     assert isinstance(draft_length, int)
     assert isinstance(vocab_size, int)
 
-    target_dists = torch.softmax(torch.randn(1, draft_length, vocab_size), dim=-1)
-    proposal_dists = torch.softmax(torch.randn(1, draft_length, vocab_size), dim=-1)
+    target_dists = torch.softmax(torch.randn(draft_length, vocab_size), dim=-1)
+    proposal_dists = torch.softmax(torch.randn(draft_length, vocab_size), dim=-1)
     return target_dists, proposal_dists
 
 
@@ -44,7 +44,7 @@ def compute_kl_divergences(
         pytest.param(
             (10, 5),
             marks=pytest.mark.xfail(
-                reason="Joint case needs more investigation",
+                reason="Joint case needs more investigation",  # now normally this will pass
             ),
         ),
     ],  # (vocab_size, draft_length)
@@ -54,39 +54,35 @@ def compute_kl_divergences(
 def test_speculative_sample(
     target_and_proposal_dists: tuple[torch.Tensor, torch.Tensor],
 ) -> None:
+    """Verify that speculative sampling approximates the target distribution over time."""
     target_dists, proposal_dists = target_and_proposal_dists
     assert target_dists.shape == proposal_dists.shape
-    batch_size, draft_length, vocab_size = proposal_dists.shape
-    assert batch_size == 1
+    draft_length, vocab_size = proposal_dists.shape
 
     kl_divergences_list = []
     # Notice that original kl divergences sometimes much lower than empirical ones
     # further exploration needed
-    original_kl_divergences = compute_kl_divergences(
-        target_dists.squeeze(0), proposal_dists.squeeze(0)
-    )
-    # kl_divergences_list.append(original_kl_divergences)
+    original_kl_divergences = compute_kl_divergences(target_dists, proposal_dists)
 
-    # [draft_length, NUM_SAMPLES] -> [1, NUM_SAMPLES, draft_length]
-    candidate_samples = torch.multinomial(
-        proposal_dists.squeeze(0), num_samples=NUM_SAMPLES, replacement=True
-    ).mT.unsqueeze(0)
+    # [draft_length, NUM_SAMPLES] -> [NUM_SAMPLES, draft_length]
+    candidate_sequences = torch.multinomial(
+        proposal_dists, num_samples=NUM_SAMPLES, replacement=True
+    ).mT
     token_frequencies = torch.zeros(draft_length, vocab_size)
 
     for sample_idx in range(NUM_SAMPLES):
+        candidate_tokens = candidate_sequences[sample_idx]  # [draft_length]
         # 1. Speculative sampling
-        candidate_sequences = candidate_samples[:, sample_idx]  # [1, draft_length]
-        rejected_idx, resampled_tokens = speculative_sample(
+        rejected_idx, resampled_token = speculative_sample(
             proposal_dists=proposal_dists,
             target_dists=target_dists,
-            candidate_sequences=candidate_sequences,
+            candidate_tokens=candidate_tokens,
         )
 
         # 2. Collect accepted tokens, update frequencies
-        accepted_tokens = candidate_sequences[:, :rejected_idx].squeeze(0)
-        if resampled_tokens is not None:
-            resampled_tokens.squeeze_(0)
-            accepted_tokens = torch.cat([accepted_tokens, resampled_tokens], dim=0)
+        accepted_tokens = candidate_tokens[:rejected_idx]
+        if rejected_idx < draft_length:
+            accepted_tokens = torch.cat([accepted_tokens, resampled_token], dim=0)
         accepted_tokens = accepted_tokens.tolist()
         for pos, token_idx in enumerate(accepted_tokens):
             token_frequencies[pos, token_idx] += 1
@@ -99,9 +95,7 @@ def test_speculative_sample(
             )  # [draft_length, 1]
             empirical_dists = token_frequencies / position_visits
 
-            kl_divergences = compute_kl_divergences(
-                target_dists.squeeze(0), empirical_dists
-            )
+            kl_divergences = compute_kl_divergences(target_dists, empirical_dists)
             kl_divergences_list.append(kl_divergences)
 
     # Check that KL divergences decrease over time
