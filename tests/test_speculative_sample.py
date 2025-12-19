@@ -78,11 +78,15 @@ def test_speculative_sample(
             target_dists=target_dists,
             candidate_tokens=candidate_tokens,
         )
+        assert rejected_idx.shape == torch.Size([])
+        assert resampled_token.shape == torch.Size([])
 
         # 2. Collect accepted tokens, update frequencies
         accepted_tokens = candidate_tokens[:rejected_idx]
         if rejected_idx < draft_length:
-            accepted_tokens = torch.cat([accepted_tokens, resampled_token], dim=0)
+            accepted_tokens = torch.cat(
+                [accepted_tokens, resampled_token.unsqueeze(0)], dim=0
+            )
         accepted_tokens = accepted_tokens.tolist()
         for pos, token_idx in enumerate(accepted_tokens):
             token_frequencies[pos, token_idx] += 1

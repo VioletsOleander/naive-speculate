@@ -16,10 +16,10 @@ def greedy_match(
         candidate_tokens (torch.Tensor): Candidate sequence of shape [draft_tokens_num].
 
     Returns:
-        rejected_idx (torch.Tensor): index of the first mismatched token in the sequence.
-          equal to `candidate_tokens.shape[0]`, i.e. the number of draft tokens, if no mismatch happens.
-        resampled_token (torch.Tensor): Greedy sampled token at the rejected position. If no rejection happens,
-          this will still be a valid tensor but should be ignored.
+        rejected_idx (torch.Tensor): Index of the first mismatched token in the sequence. Scalar tensor with empty shape.
+          If no rejections happens, equal to `candidate_tokens.shape[0]`, i.e. the number of draft tokens.
+        resampled_token (torch.Tensor): Greedy sampled token at the rejected position. Scalar tensor with empty shape.
+          If no rejection happens, this will still be a valid tensor but should be ignored.
     """
     assert target_dists.device == candidate_tokens.device
     # target_dist: [draft_tokens_num, vocab_size]
@@ -56,10 +56,10 @@ def speculative_sample(
         candidate_tokens (torch.Tensor): Candidate tokens of shape [draft_tokens_num].
 
     Returns:
-        rejected_idx (torch.Tensor): Index of the first rejected token. If no rejection happens,
-          equal to `candidate_sequences.shape[-1]`, i.e. the number of draft tokens.
-        resampled_token (torch.Tensor): Resampled token at the rejected position. If no rejection happens,
-          this will still be a valid tensor but should be ignored.
+        rejected_idx (torch.Tensor): Index of the first rejected token. Scalar tensor with empty shape.
+          If no rejection happens, equal to `candidate_tokens.shape[0]`, i.e. the number of draft tokens.
+        resampled_token (torch.Tensor): Resampled token at the rejected position. Scalar tensor with empty shape.
+          If no rejection happens, this will still be a valid tensor but should be ignored.
     """
     assert proposal_dists.device == target_dists.device == candidate_tokens.device
     # proposal_dist, target_dist: [draft_tokens_num, vocab_size]
@@ -78,14 +78,14 @@ def speculative_sample(
 
     # 2. Find the first rejection position
     accepted = torch.rand(draft_tokens_num, device=proposal_dists.device) < (
-        target_probs / proposal_probs
+        target_probs / (proposal_probs + 1e-9)
     )
     val, rejected_idx = torch.min(accepted, dim=-1)
 
     # 3. If rejection happens, resample a token from the residual distribution
     resample_dist = target_dists[rejected_idx] - proposal_dists[rejected_idx]
     resample_dist = torch.clamp_(resample_dist, min=0.0)
-    resampled_token = torch.multinomial(resample_dist, num_samples=1)
+    resampled_token = torch.multinomial(resample_dist, num_samples=1).squeeze()
 
     # if all accepted, set rejected_idx to draft_tokens_num
     rejected_idx += val * draft_tokens_num

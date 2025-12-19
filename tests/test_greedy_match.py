@@ -21,6 +21,8 @@ def test_greedy_match(target_dists: torch.Tensor) -> None:
         candidate_preds[0:reject_idx] = target_preds[0:reject_idx]
 
         rejected_idx, resampled_token = greedy_match(target_dists, candidate_preds)
+        assert rejected_idx.shape == torch.Size([])
+        assert resampled_token.shape == torch.Size([])
         assert rejected_idx == reject_idx
         assert torch.equal(resampled_token, target_preds[reject_idx])
 
