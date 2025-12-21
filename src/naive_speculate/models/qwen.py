@@ -1,7 +1,13 @@
 from typing import Literal, cast, overload
 
 import torch
-from transformers import DynamicCache, Qwen3Config, Qwen3ForCausalLM, TextStreamer
+from transformers import (
+    DynamicCache,
+    DynamicLayer,
+    Qwen3Config,
+    Qwen3ForCausalLM,
+    TextStreamer,
+)
 
 
 class QwenModel:
@@ -42,13 +48,13 @@ class QwenModel:
         """Generate new tokens given `input_ids`.
 
         Args:
-            input_ids (torch.Tensor): Input token IDs of shape (batch_size, seq_len).
+            input_ids (torch.Tensor): Input token IDs of shape [batch_size, seq_len].
             max_new_tokens (int): Maximum number of new tokens to generate.
             decode_method (str): Decoding method, either "greedy" or "random".
             streamer (TextStreamer | None): Optional streamer for output tokens.
 
         Returns:
-            torch.Tensor: Generated token IDs including input_ids and new tokens.
+            torch.Tensor: Generated token IDs including input_ids and new tokens. Shape [batch_size, seq_len + num_new_tokens].
         """
         if max_new_tokens <= 0:
             return input_ids
@@ -110,13 +116,17 @@ class QwenModel:
         to the context (except the first token) + the logits corresponding to the one new token, if `output_logits` is True.
 
         Args:
-            input_ids (torch.Tensor): Input token IDs of shape (batch_size, seq_len).
+            input_ids (torch.Tensor): Input token IDs of shape [batch_size, seq_len].
             decode_method (str): Decoding method, either "greedy" or "random".
             output_logits (bool): Whether to return logits along with generated tokens.
             streamer (TextStreamer | None): Optional streamer for output tokens.
 
         Returns:
-            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Generated token IDs, and optionally logits.
+            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Updated token IDs of shape [batch_size, seq_len + 1],
+              and optionally logits of shape [batch_size, seq_len, vocab_size].
+
+        Raises:
+            ValueError: If `decode_method` is unknown.
         """
         # 1. Forward
         # kv_cache is updated inside model.forward as a side effect
@@ -129,7 +139,10 @@ class QwenModel:
         assert outputs.logits is not None
 
         # 2. Sample
-        next_token_ids = self._sample(outputs.logits, decode_method)
+        # trick adopted from transformers.GenerationMixin._sample:
+        # copy is needed to avoid keeping a hanging ref to outputs.logits which may be very large for first iteration
+        next_token_logits = outputs.logits[:, -1, :].to(dtype=torch.float32, copy=True)
+        next_token_ids = self._sample(next_token_logits, decode_method)
 
         # 3. Update
         input_ids = torch.cat([input_ids, next_token_ids], dim=-1)
@@ -186,14 +199,18 @@ class QwenModel:
         the decoded tokens if `output_logits` is True.
 
         Args:
-            input_ids (torch.Tensor): Input token IDs of shape (batch_size, seq_len).
+            input_ids (torch.Tensor): Input token IDs of shape [batch_size, seq_len].
             max_new_tokens (int): Maximum number of new tokens to generate.
             decode_method (str): Decoding method, either "greedy" or "random".
             output_logits (bool): Whether to return logits along with generated tokens.
             streamer (TextStreamer | None): Optional streamer for output tokens.
 
         Returns:
-            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Generated token IDs, and optionally logits.
+            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Update token IDs of shape [batch_size, seq_len + num_new_tokens],
+              and optionally logits of shape [batch_size, num_new_tokens, vocab_size].
+
+        Raises:
+            ValueError: If `decode_method` is unknown.
         """
         if max_new_tokens <= 0:
             if not output_logits:
@@ -214,7 +231,8 @@ class QwenModel:
             assert outputs.logits is not None
 
             # 2. Sample
-            next_token_ids = self._sample(outputs.logits, decode_method)
+            next_token_logits = outputs.logits[:, -1, :].to(dtype=torch.float32)
+            next_token_ids = self._sample(next_token_logits, decode_method)
 
             # 3. Update
             input_ids = torch.cat([input_ids, next_token_ids], dim=-1)
@@ -239,11 +257,21 @@ class QwenModel:
             # but notice additional cost with tensor allocation and copy is incurred
             return input_ids, torch.cat(logits, dim=1)
 
-    def _sample(self, logits: torch.Tensor, decode_method: str) -> torch.Tensor:
-        # trick adopted from transformers.GenerationMixin._sample:
-        # copy is needed to avoid keeping a hanging ref to outputs.logits which may be very large for first iteration
-        next_token_logits = logits[:, -1, :].to(dtype=torch.float32, copy=True)
+    def _sample(
+        self, next_token_logits: torch.Tensor, decode_method: str
+    ) -> torch.Tensor:
+        """Sample next token IDs from logits according to `decode_method`.
 
+        Args:
+            next_token_logits (torch.Tensor): Logits of shape [batch_size, vocab_size].
+            decode_method (str): Decoding method, either "greedy" or "random".
+
+        Returns:
+            torch.Tensor: Sampled next token IDs of shape [batch_size, 1].
+
+        Raises:
+            ValueError: If `decode_method` is unknown.
+        """
         match decode_method:
             case "greedy":
                 next_token_ids = torch.argmax(next_token_logits, dim=-1, keepdim=True)
@@ -254,3 +282,19 @@ class QwenModel:
                 raise ValueError(f"Unknown decode method: {decode_method}")
 
         return next_token_ids
+
+    def print_kvcache_shape(self) -> None:
+        """Print model's kv cache shape.
+
+        It is assumed that all layers have the same kv cache shape.
+        """
+        layer = cast(DynamicLayer, self.kv_cache.layers[0])
+        if layer.keys is not None:
+            print(f"Keys shape: {layer.keys.shape}", end=", ")
+        else:
+            print("Keys shape: None", end=", ")
+
+        if layer.values is not None:
+            print(f"Values shape: {layer.values.shape}")
+        else:
+            print("Values shape: None")
