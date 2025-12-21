@@ -47,6 +47,16 @@ def test_model(hf_model: Qwen3ForCausalLM, custom_model: QwenModel) -> None:
         decode_method="greedy",
     )
 
+    # let hf model not reuse the kv_cache allocation from custom model
+    hf_outputs = hf_model.generate(
+        input_ids=input_ids,
+        attention_mask=torch.ones_like(input_ids),
+        max_new_tokens=MAX_NEW_TOKENS,
+        do_sample=False,
+    )
+    assert isinstance(hf_outputs, torch.Tensor)
+    assert torch.equal(hf_outputs, custom_outputs)
+
     # let hf model reuse the kv_cache allocation from custom model
     custom_model.kv_cache.crop(0)
     hf_outputs = hf_model.generate(
@@ -57,6 +67,5 @@ def test_model(hf_model: Qwen3ForCausalLM, custom_model: QwenModel) -> None:
         use_cache=True,
         past_key_values=custom_model.kv_cache,
     )
-
     assert isinstance(hf_outputs, torch.Tensor)
     assert torch.equal(hf_outputs, custom_outputs)
