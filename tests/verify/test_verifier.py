@@ -22,7 +22,7 @@ VOCAB_SIZE = 64
     indirect=True,
 )
 def test_verifier(verifier: Verifier, drafter: Drafter):
-    """Verify that the verifier works as expected whtn drafter model is the same as verify model."""
+    """Verify that the verifier works as expected when drafter model is the same as verify model."""
     input_ids = torch.randint(low=0, high=VOCAB_SIZE, size=(1, PROMPT_LENGTH))
 
     drafter.kv_cache.crop(0)

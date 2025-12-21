@@ -140,19 +140,19 @@ class Verifier(QwenModel):
         # 2. Verify
         target_dists = output_logits[0, -draft_len - 1 : -1]
         proposal_dists = proposal_logits[0]
-        candidiate_tokens = input_ids[0, -draft_len:]
+        candidate_tokens = input_ids[0, -draft_len:]
 
         match self.decode_method:
             case "greedy":
                 rejected_idx, resampled_token = greedy_match(
                     target_dists=target_dists,
-                    candidate_tokens=candidiate_tokens,
+                    candidate_tokens=candidate_tokens,
                 )
             case "random":
                 rejected_idx, resampled_token = speculative_sample(
                     target_dists=target_dists,
                     proposal_dists=proposal_dists,
-                    candidate_tokens=candidiate_tokens,
+                    candidate_tokens=candidate_tokens,
                 )
             case _:
                 raise ValueError(f"Unsupported decode method: {self.decode_method}")
