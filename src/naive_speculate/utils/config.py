@@ -25,9 +25,9 @@ class SpeculateConfig:
         config_dict = {
             "drafter_model_name": config_dict["draft"]["model_name"],
             "verifier_model_name": config_dict["verify"]["model_name"],
-            "max_new_tokens": config_dict["max_new_tokens"],
-            "decode_method": config_dict["decode_method"],
             "draft_tokens_num": config_dict["draft"]["draft_tokens_num"],
+            "decode_method": config_dict["decode_method"],
+            "max_new_tokens": config_dict["max_new_tokens"],
         }
 
         return SpeculateConfig.from_dict(config_dict)
@@ -41,8 +41,8 @@ class SpeculateConfig:
         if self.drafter_model_name == "" or self.verifier_model_name == "":
             raise ValueError("Model names must be specified in the config.")
 
-        if self.decode_method not in ["greedy", "stochastic"]:
-            raise ValueError("Decode method must be either 'greedy' or 'stochastic'.")
+        if self.decode_method not in ["greedy", "random"]:
+            raise ValueError("Decode method must be either 'greedy' or 'random'.")
 
         if self.max_new_tokens <= 0:
             raise ValueError("max_new_tokens must be a positive integer.")
