@@ -4,6 +4,7 @@ from transformers import Qwen3ForCausalLM
 from naive_speculate.draft import Drafter
 from naive_speculate.models import QwenModel
 from naive_speculate.utils import SpeculateConfig
+from naive_speculate.verify import Verifier
 
 
 @pytest.fixture(scope="session")
@@ -28,3 +29,11 @@ def drafter(request: pytest.FixtureRequest) -> Drafter:
     assert isinstance(request.param, dict)
     config = SpeculateConfig.from_dict(request.param)
     return Drafter(config)
+
+
+@pytest.fixture(scope="session")
+def verifier(request: pytest.FixtureRequest) -> Verifier:
+    # request.param should be the config dict
+    assert isinstance(request.param, dict)
+    config = SpeculateConfig.from_dict(request.param)
+    return Verifier(config)
