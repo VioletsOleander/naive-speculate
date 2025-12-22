@@ -36,14 +36,17 @@ class SpeculateConfig:
 
         general_configs = config_dict.get("general", {})
 
-        config_dict = {
-            "decode_method": general_configs.get("decode_method", "greedy"),
-            "max_new_tokens": general_configs.get("max_new_tokens", 1024),
-            "streaming": general_configs.get("streaming", False),
-            "drafter_model_name": config_dict["draft"]["model_name"],
-            "draft_tokens_num": config_dict["draft"].get("draft_tokens_num", 5),
-            "verifier_model_name": config_dict["verify"]["model_name"],
-        }
+        try:
+            config_dict = {
+                "decode_method": general_configs.get("decode_method", "greedy"),
+                "max_new_tokens": general_configs.get("max_new_tokens", 1024),
+                "streaming": general_configs.get("streaming", False),
+                "drafter_model_name": config_dict["draft"]["model_name"],
+                "draft_tokens_num": config_dict["draft"].get("draft_tokens_num", 5),
+                "verifier_model_name": config_dict["verify"]["model_name"],
+            }
+        except KeyError as e:
+            raise KeyError(f"Missing required configuration key: {e}")
 
         return SpeculateConfig.from_dict(config_dict)
 
