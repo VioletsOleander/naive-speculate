@@ -12,7 +12,7 @@ class Tokenizer:
     It is assumed that drafter and verifier share the same tokenizer.
 
     Attributes:
-        tokenizer (PreTrainedTokenizerFast): The tokenizer instance.
+        tokenizer (PreTrainedTokenizerFast): The huggingface tokenizer instance.
     """
 
     tokenizer: PreTrainedTokenizerFast
@@ -46,11 +46,11 @@ class Tokenizer:
     ) -> BatchEncoding | tuple[Tensor, Tensor]:
         """Tokenize a batch of input sequences into token ID sequences.
 
-        Returns either a BatchEncoding object or a tuple of tensors (input_ids and attention_mask) based on return_tensors flag.
+        Returns either a BatchEncoding object or a tuple of tensors (input_ids and attention_mask) based on `return_tensors` flag.
 
         Args:
             input_texts (list[str]): List of input strings to tokenize.
-            return_tensors (bool): Whether to return tensors or BatchEncoding object.
+            return_tensors (bool): Return a tuple of `Tensor` or `BatchEncoding`.
 
         Returns:
             BatchEncoding | tuple[Tensor, Tensor]: Tokenized output.
@@ -73,11 +73,11 @@ class Tokenizer:
         """Detokenize a batch of token ID sequences back into strings.
 
         Args:
-            token_ids (Tensor): Batch of token ID sequences. Shape [batch_size, seq_len].
-            skip_special_tokens (bool): Whether to skip special tokens during decoding. Defaults to False.
+            token_ids (Tensor): Batch of token ID sequences. Shape: `[batch_size, seq_len]`.
+            skip_special_tokens (bool): If True, special tokens will be removed from the output strings.
 
         Returns:
-            list[str]: Detokenized strings. Length [batch_size].
+            list[str]: Detokenized strings. Length: `[batch_size]`.
         """
         return self.tokenizer.batch_decode(
             token_ids, skip_special_tokens=skip_special_tokens
@@ -91,7 +91,7 @@ class Tokenizer:
         Args:
             messages (list[dict[str, str]]): List of chat messages, where each message is a dict
                 with keys "role" and "content".
-            enable_thinking (bool): Whether to enable thinking mode in the chat template. Defaults to True.
+            enable_thinking (bool): If True, append \<think\> and \</think\> to the generation prompt.
 
         Returns:
             str: Constructed prompt text.

@@ -13,9 +13,9 @@ class QwenModel:
     """Wrapper class for Qwen3ForCausalLM to simplify inference API and typing annotations.
 
     Attributes:
-        model (Qwen3ForCausalLM): The Qwen model for causal language modeling.
-        model_config (Qwen3Config): Configuration of the Qwen model.
-        kv_cache (DynamicCache): Key-value cache for efficient generation.
+        model (Qwen3ForCausalLM)
+        model_config (Qwen3Config)
+        kv_cache (DynamicCache)
     """
 
     model: Qwen3ForCausalLM
@@ -43,15 +43,15 @@ class QwenModel:
         max_new_tokens: int,
         decode_method: str,
     ) -> torch.Tensor:
-        """Generate new tokens given `input_ids`.
+        """Generate new tokens given the context.
 
         Args:
-            input_ids (torch.Tensor): Input token IDs of shape [batch_size, seq_len].
-            max_new_tokens (int): Maximum number of new tokens to generate.
-            decode_method (str): Decoding method, either "greedy" or "random".
+            input_ids (torch.Tensor): Input context's token IDs of shape `[batch_size, seq_len]`.
+            max_new_tokens (int): Limit on the number of new tokens to generate.
+            decode_method (str): Either "greedy" or "random".
 
         Returns:
-            torch.Tensor: Generated token IDs including input_ids and new tokens. Shape [batch_size, seq_len + num_new_tokens].
+            torch.Tensor: Updated token IDs. Shape `[batch_size, seq_len + num_new_tokens]`.
         """
         if max_new_tokens <= 0:
             return input_ids
@@ -101,17 +101,17 @@ class QwenModel:
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """Prefill the model with `input_ids` and generate one new token.
 
-        Return the updated `input_ids` (with one new token appended), and optionally the logits corresponding
-        to the context (except the first token) + the logits corresponding to the one new token, if `output_logits` is True.
+        Return the updated `input_ids` (with one new token appended), and optionally the logits of
+        the context (except the first token) + the logits of the one new token, if `output_logits` is True.
 
         Args:
-            input_ids (torch.Tensor): Input token IDs of shape [batch_size, seq_len].
-            decode_method (str): Decoding method, either "greedy" or "random".
-            output_logits (bool): Whether to return logits along with generated tokens.
+            input_ids (torch.Tensor): Input context's token IDs of shape `[batch_size, seq_len]`.
+            decode_method (str): Either "greedy" or "random".
+            output_logits (bool): Additionally return logits or not.
 
         Returns:
-            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Updated token IDs of shape [batch_size, seq_len + 1],
-              and optionally logits of shape [batch_size, seq_len, vocab_size].
+            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Updated token IDs of shape `[batch_size, seq_len + 1]`,
+              and optionally logits of shape `[batch_size, seq_len, vocab_size]`.
 
         Raises:
             ValueError: If `decode_method` is unknown.
@@ -177,19 +177,19 @@ class QwenModel:
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """Decode new tokens auto-regressively.
 
-        Returns the updated `input_ids` (with new tokens appended), and optionally the logits corresponding to
+        Should be called after `_prefill`.
+        Returns the updated `input_ids` (with new tokens appended), and optionally the logits of
         the decoded tokens if `output_logits` is True.
 
         Args:
-            input_ids (torch.Tensor): Input token IDs of shape [batch_size, seq_len].
-            max_new_tokens (int): Maximum number of new tokens to generate.
-            decode_method (str): Decoding method, either "greedy" or "random".
-            output_logits (bool): Whether to return logits along with generated tokens.
-            streamer (TextStreamer | None): Optional streamer for output tokens.
+            input_ids (torch.Tensor): Input context's token IDs of shape `[batch_size, seq_len]`.
+            max_new_tokens (int): Limit on the number of new tokens to generate.
+            decode_method (str): Either "greedy" or "random".
+            output_logits (bool): Additionally return logits of decoded tokens or not.
 
         Returns:
-            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Update token IDs of shape [batch_size, seq_len + num_new_tokens],
-              and optionally logits of shape [batch_size, num_new_tokens, vocab_size].
+            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Update token IDs of shape `[batch_size, seq_len + num_new_tokens]`,
+              and optionally logits of shape `[batch_size, num_new_tokens, vocab_size]`.
 
         Raises:
             ValueError: If `decode_method` is unknown.
@@ -243,11 +243,11 @@ class QwenModel:
         """Sample next token IDs from logits according to `decode_method`.
 
         Args:
-            next_token_logits (torch.Tensor): Logits of shape [batch_size, vocab_size].
-            decode_method (str): Decoding method, either "greedy" or "random".
+            next_token_logits (torch.Tensor): Logits of shape `[batch_size, vocab_size]`.
+            decode_method (str): Either "greedy" or "random".
 
         Returns:
-            torch.Tensor: Sampled next token IDs of shape [batch_size, 1].
+            torch.Tensor: Sampled next token IDs of shape `[batch_size, 1]`.
 
         Raises:
             ValueError: If `decode_method` is unknown.
@@ -263,10 +263,10 @@ class QwenModel:
 
         return next_token_ids
 
-    # for debug
     def _print_kvcache_shape(self) -> None:
         """Print model's kv cache shape.
 
+        Mainly for debugging purpose.
         It is assumed that all layers have the same kv cache shape.
         """
         layer = cast(DynamicLayer, self.kv_cache.layers[0])
