@@ -41,7 +41,7 @@ def test_tokenizer(tokenizer: Tokenizer, text: str) -> None:
     Ensures that text generated from chat messages, when tokenized and then detokenized,
     matches the original text.
     """
-    input_ids = tokenizer.tokenize([text])[0]
+    input_ids, _ = tokenizer.tokenize([text])
     detokenized = tokenizer.detokenize(input_ids)[0]
 
     assert detokenized == text

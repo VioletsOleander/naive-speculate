@@ -77,7 +77,7 @@ class Tokenizer:
             skip_special_tokens (bool): Whether to skip special tokens during decoding. Defaults to False.
 
         Returns:
-            list[str]: Detokenized strings. Shape [batch_size].
+            list[str]: Detokenized strings. Length [batch_size].
         """
         return self.tokenizer.batch_decode(
             token_ids, skip_special_tokens=skip_special_tokens
