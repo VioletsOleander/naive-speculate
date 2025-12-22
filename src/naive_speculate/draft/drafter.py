@@ -13,7 +13,7 @@ class Drafter(QwenModel):
         draft_tokens_num (int): Number of tokens to draft.
         decode_method (str): Method used for decoding.
         prefill_done (bool): Flag indicating if prefill has been done.
-        logger (Logger | None): Optional logger for logging information.
+        logger (Logger | None): Optional logger for logging information, a dummy logger is used if None is provided.
     """
 
     draft_tokens_num: int
@@ -55,8 +55,9 @@ class Drafter(QwenModel):
                 decode_method=self.decode_method,
                 output_logits=True,
             )
-            new_token_logit = candidate_logits[:, -1:None, :]
+            new_token_logit = candidate_logits[:, -1:, :]
 
+        # bug here, requires fix
         input_ids, candidate_logits = self._decode(
             input_ids=input_ids,
             max_new_tokens=self.draft_tokens_num

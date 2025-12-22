@@ -1,11 +1,10 @@
 import logging
-from logging import Logger
 from typing import Any
 
 from transformers import TextStreamer
 
 
-def logger_or_dummy(logger: Logger | None):
+def logger_or_dummy(logger: logging.Logger | None) -> logging.Logger:
     if logger is None:
         logger = logging.getLogger("dummy_logger")
         logger.addHandler(logging.NullHandler())
