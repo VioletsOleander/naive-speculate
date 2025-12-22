@@ -6,7 +6,6 @@ from transformers import (
     DynamicLayer,
     Qwen3Config,
     Qwen3ForCausalLM,
-    TextStreamer,
 )
 
 
@@ -43,7 +42,6 @@ class QwenModel:
         input_ids: torch.Tensor,
         max_new_tokens: int,
         decode_method: str,
-        streamer: TextStreamer | None = None,
     ) -> torch.Tensor:
         """Generate new tokens given `input_ids`.
 
@@ -51,7 +49,6 @@ class QwenModel:
             input_ids (torch.Tensor): Input token IDs of shape [batch_size, seq_len].
             max_new_tokens (int): Maximum number of new tokens to generate.
             decode_method (str): Decoding method, either "greedy" or "random".
-            streamer (TextStreamer | None): Optional streamer for output tokens.
 
         Returns:
             torch.Tensor: Generated token IDs including input_ids and new tokens. Shape [batch_size, seq_len + num_new_tokens].
@@ -62,17 +59,13 @@ class QwenModel:
         input_ids = self._prefill(
             input_ids=input_ids,
             decode_method=decode_method,
-            streamer=streamer,
         )
         output_ids = self._decode(
             input_ids=input_ids,
             max_new_tokens=max_new_tokens - 1,  # prefill already generated 1 token
             decode_method=decode_method,
-            streamer=streamer,
         )
 
-        if streamer is not None:
-            streamer.end()
         return output_ids
 
     @overload
@@ -81,7 +74,6 @@ class QwenModel:
         input_ids: torch.Tensor,
         decode_method: str,
         output_logits: Literal[False] = False,
-        streamer: TextStreamer | None = None,
     ) -> torch.Tensor: ...
 
     @overload
@@ -90,7 +82,6 @@ class QwenModel:
         input_ids: torch.Tensor,
         decode_method: str,
         output_logits: Literal[True],
-        streamer: TextStreamer | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]: ...
 
     @overload
@@ -99,7 +90,6 @@ class QwenModel:
         input_ids: torch.Tensor,
         decode_method: str,
         output_logits: bool,
-        streamer: TextStreamer | None = None,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]: ...
 
     @torch.no_grad()
@@ -108,7 +98,6 @@ class QwenModel:
         input_ids: torch.Tensor,
         decode_method: str,
         output_logits: bool = False,
-        streamer: TextStreamer | None = None,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """Prefill the model with `input_ids` and generate one new token.
 
@@ -119,7 +108,6 @@ class QwenModel:
             input_ids (torch.Tensor): Input token IDs of shape [batch_size, seq_len].
             decode_method (str): Decoding method, either "greedy" or "random".
             output_logits (bool): Whether to return logits along with generated tokens.
-            streamer (TextStreamer | None): Optional streamer for output tokens.
 
         Returns:
             torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Updated token IDs of shape [batch_size, seq_len + 1],
@@ -146,8 +134,6 @@ class QwenModel:
 
         # 3. Update
         input_ids = torch.cat([input_ids, next_token_ids], dim=-1)
-        if streamer is not None:
-            streamer.put(next_token_ids.cpu())
 
         if not output_logits:
             return input_ids
@@ -161,7 +147,6 @@ class QwenModel:
         max_new_tokens: int,
         decode_method: str,
         output_logits: Literal[False] = False,
-        streamer: TextStreamer | None = None,
     ) -> torch.Tensor: ...
 
     @overload
@@ -171,7 +156,6 @@ class QwenModel:
         max_new_tokens: int,
         decode_method: str,
         output_logits: Literal[True],
-        streamer: TextStreamer | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]: ...
 
     @overload
@@ -181,7 +165,6 @@ class QwenModel:
         max_new_tokens: int,
         decode_method: str,
         output_logits: bool,
-        streamer: TextStreamer | None = None,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]: ...
 
     @torch.no_grad()
@@ -191,7 +174,6 @@ class QwenModel:
         max_new_tokens: int,
         decode_method: str,
         output_logits: bool = False,
-        streamer: TextStreamer | None = None,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         """Decode new tokens auto-regressively.
 
@@ -237,8 +219,6 @@ class QwenModel:
             # 3. Update
             input_ids = torch.cat([input_ids, next_token_ids], dim=-1)
             num_new_tokens += 1
-            if streamer is not None:
-                streamer.put(next_token_ids.cpu())
 
             if output_logits:
                 logits.append(outputs.logits)
@@ -283,7 +263,8 @@ class QwenModel:
 
         return next_token_ids
 
-    def print_kvcache_shape(self) -> None:
+    # for debug
+    def _print_kvcache_shape(self) -> None:
         """Print model's kv cache shape.
 
         It is assumed that all layers have the same kv cache shape.
