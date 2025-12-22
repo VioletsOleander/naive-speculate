@@ -5,11 +5,23 @@ from pathlib import Path
 
 @dataclass
 class SpeculateConfig:
+    """Configuration for the speculative generation process.
+
+    Attributes:
+        drafter_model_name (str): Name of the drafter model.
+        verifier_model_name (str): Name of the verifier model.
+        max_new_tokens (int): Maximum number of new tokens to generate.
+        decode_method (str): Decoding method to use ('greedy' or 'random').
+        draft_tokens_num (int): Number of tokens to draft in each speculation step.
+        streaming (bool): Whether to enable streaming output.
+    """
+
     drafter_model_name: str = ""
     verifier_model_name: str = ""
     max_new_tokens: int = 0
     decode_method: str = ""
     draft_tokens_num: int = 0
+    streaming: bool = False
 
     @staticmethod
     def from_dict(config_dict: dict) -> SpeculateConfig:
@@ -22,13 +34,19 @@ class SpeculateConfig:
         with open(Path(config_path), "rb") as f:
             config_dict = tomllib.load(f)
 
-        config_dict = {
-            "drafter_model_name": config_dict["draft"]["model_name"],
-            "verifier_model_name": config_dict["verify"]["model_name"],
-            "draft_tokens_num": config_dict["draft"]["draft_tokens_num"],
-            "decode_method": config_dict["decode_method"],
-            "max_new_tokens": config_dict["max_new_tokens"],
-        }
+        general_configs = config_dict.get("general", {})
+
+        try:
+            config_dict = {
+                "decode_method": general_configs.get("decode_method", "greedy"),
+                "max_new_tokens": general_configs.get("max_new_tokens", 1024),
+                "streaming": general_configs.get("streaming", False),
+                "drafter_model_name": config_dict["draft"]["model_name"],
+                "draft_tokens_num": config_dict["draft"].get("draft_tokens_num", 5),
+                "verifier_model_name": config_dict["verify"]["model_name"],
+            }
+        except KeyError as e:
+            raise KeyError(f"Missing required configuration key: {e}")
 
         return SpeculateConfig.from_dict(config_dict)
 
@@ -38,14 +56,14 @@ class SpeculateConfig:
         Raises:
             ValueError: If any configuration value is invalid.
         """
-        if self.drafter_model_name == "" or self.verifier_model_name == "":
-            raise ValueError("Model names must be specified in the config.")
-
         if self.decode_method not in ["greedy", "random"]:
             raise ValueError("Decode method must be either 'greedy' or 'random'.")
 
         if self.max_new_tokens <= 0:
             raise ValueError("max_new_tokens must be a positive integer.")
+
+        if self.drafter_model_name == "" or self.verifier_model_name == "":
+            raise ValueError("Model names must be specified in the config.")
 
         if self.draft_tokens_num <= 0:
             raise ValueError("draft_tokens_num must be a positive integer.")
