@@ -59,9 +59,6 @@ class SpeculateConfig:
         if self.max_new_tokens <= 0:
             raise ValueError("max_new_tokens must be a positive integer.")
 
-        if not isinstance(self.streaming, bool):
-            raise ValueError("streaming must be a boolean value.")
-
         if self.drafter_model_name == "" or self.verifier_model_name == "":
             raise ValueError("Model names must be specified in the config.")
 
