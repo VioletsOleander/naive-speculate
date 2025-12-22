@@ -68,16 +68,16 @@ class Tokenizer:
         return input_ids, attention_mask
 
     def detokenize(
-        self, token_ids: list[list[int]], skip_special_tokens: bool = False
+        self, token_ids: Tensor, skip_special_tokens: bool = False
     ) -> list[str]:
         """Detokenize a batch of token ID sequences back into strings.
 
         Args:
-            token_ids (list[list[int]] | Tensor): Batch of token ID sequences.
+            token_ids (Tensor): Batch of token ID sequences. Shape [batch_size, seq_len].
             skip_special_tokens (bool): Whether to skip special tokens during decoding. Defaults to False.
 
         Returns:
-            list[str]: Detokenized strings.
+            list[str]: Detokenized strings. Length [batch_size].
         """
         return self.tokenizer.batch_decode(
             token_ids, skip_special_tokens=skip_special_tokens

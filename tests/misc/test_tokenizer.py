@@ -42,6 +42,6 @@ def test_tokenizer(tokenizer: Tokenizer, text: str) -> None:
     matches the original text.
     """
     input_ids, _ = tokenizer.tokenize([text])
-    detokenized = tokenizer.detokenize(input_ids.tolist())[0]
+    detokenized = tokenizer.detokenize(input_ids)[0]
 
     assert detokenized == text
