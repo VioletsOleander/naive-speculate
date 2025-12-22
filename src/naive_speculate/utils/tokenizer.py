@@ -50,7 +50,7 @@ class Tokenizer:
 
         Args:
             input_texts (list[str]): List of input strings to tokenize.
-            return_tensors (bool): Return `Tensor` or `BatchEncoding`.
+            return_tensors (bool): Return a tuple of `Tensor` or `BatchEncoding`.
 
         Returns:
             BatchEncoding | tuple[Tensor, Tensor]: Tokenized output.
