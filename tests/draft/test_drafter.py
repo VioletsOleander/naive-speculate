@@ -23,6 +23,7 @@ def test_drafter(drafter: Drafter, hf_model: Qwen3ForCausalLM) -> None:
     """Verify drafter model outputs match HuggingFace model outputs."""
     input_ids = torch.randint(0, hf_model.config.vocab_size, (1, PROMPT_LENGTH))
 
+    drafter._reset()
     drafter.kv_cache.crop(0)
     draft_outputs, candidate_logits = drafter.draft(input_ids)
 
