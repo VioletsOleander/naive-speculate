@@ -1,6 +1,6 @@
 [general]
 max_new_tokens = 1024    # (Optional) Maximum number of new tokens to generate, default to 1024
-decode_method = "greedy" # (Optional) Decode methods for generation, default to "greedy"
+decode_method = "greedy" # (Optional) Decode method for generation, default to "greedy"
 streaming = false        # (Optional) Whether to enable streaming output, default to false
 
 [draft]
