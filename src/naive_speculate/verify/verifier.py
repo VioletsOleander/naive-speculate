@@ -100,7 +100,7 @@ class Verifier(QwenModel):
     Attributes:
         decode_method (str): Decoding method to use during verification.
         first_prefill_done (bool): Flag indicating if the first prefill has been done.
-        logger (Logger | None): Logger for logging information.
+        logger (Logger): Logger for logging information.
     """
 
     decode_method: str
