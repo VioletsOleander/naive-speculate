@@ -10,10 +10,10 @@ class Drafter(QwenModel):
     """Drafter model for generating candidate tokens.
 
     Attributes:
-        draft_tokens_num (int): Number of tokens to draft.
-        decode_method (str): Method used for decoding.
-        prefill_done (bool): Flag indicating if prefill has been done.
-        logger (Logger | None): Optional logger for logging information, a dummy logger is used if None is provided.
+        draft_tokens_num (int): Number of tokens to draft in each round.
+        decode_method (str): Should be 'greedy' or 'random'.
+        prefill_done (bool): If prefill has been done.
+        logger (Logger): Used for logging.
     """
 
     draft_tokens_num: int
@@ -33,18 +33,20 @@ class Drafter(QwenModel):
         self,
         input_ids: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Generate candidate tokens given the `input_ids`.
+        """Generate candidate tokens given the context.
 
-        Returns the generated tokens and their corresponding logits.
+        On first call, performs prefill. On subsequent calls, continues generation
+        from previous state.
+        Returns the updated tokens IDs and logits of newly generated tokens.
 
         Args:
-            input_ids (torch.Tensor): The input token IDs of shape: [batch_size, seq_len]
+            input_ids (torch.Tensor): The context's token IDs. Shape: `[batch_size, seq_len]`
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: A tuple containing the updated token IDs and logits corresponding to the generated draft tokens.
+            tuple[torch.Tensor, torch.Tensor]: The updated token IDs and logits of the generated draft tokens.
             Shapes:
-              - updated_input_ids: [batch_size, seq_len + draft_tokens_num]
-              - candidate_logits: [batch_size, draft_tokens_num, vocab_size]
+              - updated_input_ids: `[batch_size, seq_len + draft_tokens_num]`
+              - candidate_logits: `[batch_size, draft_tokens_num, vocab_size]`
 
         Raises:
             ValueError: If `self.decode_method` is not supported.
@@ -73,5 +75,5 @@ class Drafter(QwenModel):
         return input_ids, candidate_logits
 
     def _reset(self) -> None:
-        """Reset the drafter state for a new generation session."""
+        """Reset state for new generation session."""
         self.prefill_done = False
