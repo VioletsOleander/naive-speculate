@@ -12,20 +12,23 @@ class Drafter(QwenModel):
     Attributes:
         draft_tokens_num (int): Number of tokens to draft in each round.
         decode_method (str): Should be 'greedy' or 'random'.
-        prefill_done (bool): If prefill has been done.
-        logger (Logger): Used for logging.
+        logger (Logger)
     """
 
     draft_tokens_num: int
     decode_method: str
-    prefill_done: bool
     logger: Logger
 
     def __init__(self, config: SpeculateConfig, logger: Logger | None = None):
+        """Initialize the Drafter model.
+
+        Args:
+            config (SpeculateConfig)
+            logger (Logger | None): If None, a dummy logger will be used, which ignores all logging calls.
+        """
         super().__init__(config.drafter_model_name)
         self.draft_tokens_num = config.draft_tokens_num
         self.decode_method = config.decode_method
-        self.prefill_done = False
         self.logger = logger_or_dummy(logger)
 
     @torch.no_grad()
@@ -35,8 +38,6 @@ class Drafter(QwenModel):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Generate candidate tokens given the context.
 
-        On first call, performs prefill. On subsequent calls, continues generation
-        from previous state.
         Returns the updated tokens IDs and logits of newly generated tokens.
 
         Args:
@@ -51,29 +52,25 @@ class Drafter(QwenModel):
         Raises:
             ValueError: If `self.decode_method` is not supported.
         """
+        draft_tokens_num = self.draft_tokens_num
+
         if not self.prefill_done:
             input_ids, candidate_logits = self._prefill(
                 input_ids=input_ids,
                 decode_method=self.decode_method,
                 output_logits=True,
             )
-            new_token_logit = candidate_logits[:, -1:, :]
+            new_token_logits = candidate_logits[:, -1:, :]
+            draft_tokens_num -= 1
 
-        # bug here, requires fix
         input_ids, candidate_logits = self._decode(
             input_ids=input_ids,
-            max_new_tokens=self.draft_tokens_num
-            - 1,  # Already generated one token in prefill
+            max_new_tokens=draft_tokens_num,
             decode_method=self.decode_method,
             output_logits=True,
         )
-
         if not self.prefill_done:
-            candidate_logits = torch.cat([new_token_logit, candidate_logits], dim=1)
+            candidate_logits = torch.cat((new_token_logits, candidate_logits), dim=1)
             self.prefill_done = True
 
         return input_ids, candidate_logits
-
-    def _reset(self) -> None:
-        """Reset state for new generation session."""
-        self.prefill_done = False
