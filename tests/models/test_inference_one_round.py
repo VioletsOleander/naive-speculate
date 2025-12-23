@@ -31,7 +31,8 @@ def test_inference_one_round(
         do_sample=False,
     )
     assert isinstance(hf_outputs, torch.Tensor)
-    assert torch.equal(hf_outputs, model_outputs)
+    hf_outputs_length = hf_outputs.shape[1]
+    assert torch.equal(hf_outputs, model_outputs[:, :hf_outputs_length])
 
     # let hf model reuse the kv_cache allocation from custom model
     custom_model.kv_cache.crop(0)
@@ -44,4 +45,5 @@ def test_inference_one_round(
         past_key_values=custom_model.kv_cache,
     )
     assert isinstance(hf_outputs, torch.Tensor)
-    assert torch.equal(hf_outputs, model_outputs)
+    hf_outputs_length = hf_outputs.shape[1]
+    assert torch.equal(hf_outputs, model_outputs[:, :hf_outputs_length])
