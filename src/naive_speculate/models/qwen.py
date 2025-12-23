@@ -12,15 +12,23 @@ from transformers import (
 class QwenModel:
     """Wrapper class for Qwen3ForCausalLM to simplify inference API and typing annotations.
 
+    Currently only supports batch_size = 1. Maybe later on I can add batch support, and further
+    including continuous batching, pd disaggregation, etc.
+
     Attributes:
         model (Qwen3ForCausalLM)
         model_config (Qwen3Config)
         kv_cache (DynamicCache)
+        prefill_done (bool)
+        decode_chunk_size (int): EOS token check interval during decoding, default to 8. Used as
+        a simple trick to reduce device synchronization overhead.
     """
 
     model: Qwen3ForCausalLM
     model_config: Qwen3Config
     kv_cache: DynamicCache
+    prefill_done: bool
+    decode_chunk_size: int
 
     def __init__(self, model_name: str) -> None:
         self.model = Qwen3ForCausalLM.from_pretrained(
@@ -31,6 +39,8 @@ class QwenModel:
         )
         self.model_config = self.model.config
         self.kv_cache = DynamicCache(config=self.model.config)
+        self.prefill_done = False
+        self.decode_chunk_size = 8  # just use default value here
 
     @property
     def device(self) -> torch.device:
@@ -56,13 +66,17 @@ class QwenModel:
         if max_new_tokens <= 0:
             return input_ids
 
-        input_ids = self._prefill(
-            input_ids=input_ids,
-            decode_method=decode_method,
-        )
+        if not self.prefill_done:
+            input_ids = self._prefill(
+                input_ids=input_ids,
+                decode_method=decode_method,
+            )
+            max_new_tokens = max_new_tokens - 1
+            self.prefill_done = True
+
         output_ids = self._decode(
             input_ids=input_ids,
-            max_new_tokens=max_new_tokens - 1,  # prefill already generated 1 token
+            max_new_tokens=max_new_tokens,
             decode_method=decode_method,
         )
 
@@ -127,8 +141,7 @@ class QwenModel:
         assert outputs.logits is not None
 
         # 2. Sample
-        # trick adopted from transformers.GenerationMixin._sample:
-        # copy is needed to avoid keeping a hanging ref to outputs.logits which may be very large for first iteration
+        # copy to avoid keeping a hanging ref to full outputs.logits
         next_token_logits = outputs.logits[:, -1, :].to(dtype=torch.float32, copy=True)
         next_token_ids = self._sample(next_token_logits, decode_method)
 
@@ -137,8 +150,8 @@ class QwenModel:
 
         if not output_logits:
             return input_ids
-
-        return input_ids, outputs.logits
+        else:
+            return input_ids, outputs.logits
 
     @overload
     def _decode(
@@ -197,44 +210,51 @@ class QwenModel:
         if max_new_tokens <= 0:
             if not output_logits:
                 return input_ids
-            return input_ids, torch.empty(0, device=self.device)
+            else:
+                return input_ids, torch.empty(0, device=self.device)
 
-        num_new_tokens = 0
         logits = []
-        while True:
-            # 1. Forward
-            # kv_cache is updated inside model.forward as a side effect
-            outputs = self.model.forward(
-                input_ids=cast(torch.LongTensor, input_ids[:, -1:]),
-                logits_to_keep=1,
-                use_cache=True,
-                past_key_values=self.kv_cache,
+        max_chunks = (
+            max_new_tokens + self.decode_chunk_size - 1
+        ) // self.decode_chunk_size
+        num_new_tokens = 0
+        for _ in range(max_chunks):
+            decode_chunk_size = min(
+                self.decode_chunk_size, max_new_tokens - num_new_tokens
             )
-            assert outputs.logits is not None
+            for _ in range(decode_chunk_size):
+                # 1. Forward
+                # kv_cache is updated inside model.forward as a side effect
+                outputs = self.model.forward(
+                    input_ids=cast(torch.LongTensor, input_ids[:, -1:]),
+                    logits_to_keep=1,
+                    use_cache=True,
+                    past_key_values=self.kv_cache,
+                )
+                assert outputs.logits is not None
 
-            # 2. Sample
-            next_token_logits = outputs.logits[:, -1, :].to(dtype=torch.float32)
-            next_token_ids = self._sample(next_token_logits, decode_method)
+                # 2. Sample
+                next_token_logits = outputs.logits[:, -1, :].to(dtype=torch.float32)
+                next_token_ids = self._sample(next_token_logits, decode_method)
 
-            # 3. Update
-            input_ids = torch.cat([input_ids, next_token_ids], dim=-1)
-            num_new_tokens += 1
+                # 3. Update
+                input_ids = torch.cat([input_ids, next_token_ids], dim=-1)
 
-            if output_logits:
-                logits.append(outputs.logits)
+                num_new_tokens += 1
+                if output_logits:
+                    logits.append(outputs.logits)
 
-            if (
-                num_new_tokens >= max_new_tokens
-                or next_token_ids[0, 0].item() == self.model_config.eos_token_id
-            ):
+            # check for EOS token existance in the last chunk
+            eos_token_id = cast(int, self.model_config.eos_token_id)
+            is_eos = input_ids[0, -decode_chunk_size:] == eos_token_id
+            eos_found, eos_token_idx = torch.max(is_eos, dim=0)
+            if eos_found.item():
+                input_ids = input_ids[:, : -(decode_chunk_size - eos_token_idx - 1)]
                 break
 
         if not output_logits:
             return input_ids
         else:
-            # the huggingface generate API returns tuple of tensors directly
-            # here, we additionally concatenate along seq_len dimension to maintain API consistency with prefill
-            # but notice additional cost with tensor allocation and copy is incurred
             return input_ids, torch.cat(logits, dim=1)
 
     def _sample(
@@ -263,10 +283,18 @@ class QwenModel:
 
         return next_token_ids
 
+    def _reset(self) -> None:
+        """Reset the model state for a new inference session.
+
+        Primarily used for testing purpose.
+        """
+        self.kv_cache.crop(0)
+        self.prefill_done = False
+
     def _print_kvcache_shape(self) -> None:
         """Print model's kv cache shape.
 
-        Mainly for debugging purpose.
+        Primarily used for debugging purpose.
         It is assumed that all layers have the same kv cache shape.
         """
         layer = cast(DynamicLayer, self.kv_cache.layers[0])
