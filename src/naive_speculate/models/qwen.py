@@ -75,14 +75,14 @@ class QwenModel:
         if max_new_tokens <= 0:
             return input_ids
 
-        num_total_tokens = input_ids.shape[1]
-
         # Prefill
-        num_new_tokens = num_total_tokens - self.num_cached_tokens
-        if num_new_tokens > 1:
+        num_total_tokens = input_ids.shape[1]
+        num_uncached_tokens = num_total_tokens - self.num_cached_tokens
+        if num_uncached_tokens > 1:
             input_ids = self._prefill(
-                input_ids=input_ids[:, -num_new_tokens:],
+                input_ids=input_ids,
                 decode_method=decode_method,
+                num_uncached_tokens=num_uncached_tokens,
             )
             max_new_tokens = max_new_tokens - 1
 
@@ -100,6 +100,7 @@ class QwenModel:
     def _prefill(
         self,
         input_ids: torch.Tensor,
+        num_uncached_tokens: int,
         decode_method: str,
         output_logits: Literal[False] = False,
     ) -> torch.Tensor: ...
@@ -108,6 +109,7 @@ class QwenModel:
     def _prefill(
         self,
         input_ids: torch.Tensor,
+        num_uncached_tokens: int,
         decode_method: str,
         output_logits: Literal[True],
     ) -> tuple[torch.Tensor, torch.Tensor]: ...
@@ -116,6 +118,7 @@ class QwenModel:
     def _prefill(
         self,
         input_ids: torch.Tensor,
+        num_uncached_tokens: int,
         decode_method: str,
         output_logits: bool,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]: ...
@@ -124,6 +127,7 @@ class QwenModel:
     def _prefill(
         self,
         input_ids: torch.Tensor,
+        num_uncached_tokens: int,
         decode_method: str,
         output_logits: bool = False,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
@@ -131,17 +135,21 @@ class QwenModel:
 
         KV cache is updated internally.
 
+        The new tokens (uncached tokens) in `input_ids` will be sliced for using as query tokens.
+
         Return the updated `input_ids` (with one new token appended), and optionally the logits of
-        the input tokens (except the first token) + the logits of the new generated token, if `output_logits` is True.
+        the uncached tokens in `input_ids` (except the first token) + the logits of the new generated token,
+        if `output_logits` is True.
 
         Args:
-            input_ids (torch.Tensor): Input token IDs of shape `[batch_size, num_input_tokens]`.
+            input_ids (torch.Tensor): Input token IDs of shape `[batch_size, seq_len]`.
+            num_uncached_tokens (int): Number of uncached tokens in `input_ids`.
             decode_method (str): Either "greedy" or "random".
             output_logits (bool): Additionally return logits or not.
 
         Returns:
-            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Updated token IDs of shape `[batch_size, num_input_tokens + 1]`,
-              and optionally logits of shape `[batch_size, num_input_tokens, vocab_size]`.
+            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Updated token IDs of shape `[batch_size, seq_len + 1]`,
+              and optionally logits of shape `[batch_size, num_uncached_tokens, vocab_size]`.
 
         Raises:
             ValueError: If `decode_method` is unknown.
@@ -149,7 +157,7 @@ class QwenModel:
         # 1. Forward
         # kv_cache is updated inside model.forward as a side effect
         forward_out = self.model.forward(
-            input_ids=cast(torch.LongTensor, input_ids),
+            input_ids=cast(torch.LongTensor, input_ids[:, -num_uncached_tokens:]),
             logits_to_keep=0,  # output all logits
             use_cache=True,
             past_key_values=self.kv_cache,
@@ -211,6 +219,8 @@ class QwenModel:
 
         KV cache is updated internally.
 
+        The last tokens in `input_ids` will be sliced for using as query tokens.
+
         Return the updated `input_ids` (with new decoded tokens appended), and optionally the logits of
         the new decoded tokens if `output_logits` is True.
 
@@ -218,8 +228,7 @@ class QwenModel:
         optionally an empty tensor of shape `[batch_size, 0, vocab_size]` if `output_logits` is True.
 
         Args:
-            input_ids (torch.Tensor): Input token IDs of shape `[batch_size, seq_len]`, the last tokens
-                will be sliced for using as query tokens.
+            input_ids (torch.Tensor): Input token IDs of shape `[batch_size, seq_len]`
             max_new_tokens (int): Limit on the number of new tokens to generate.
             decode_method (str): Either "greedy" or "random".
             output_logits (bool): Additionally return logits of decoded tokens or not.
