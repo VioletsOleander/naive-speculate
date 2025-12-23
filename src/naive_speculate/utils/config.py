@@ -12,7 +12,7 @@ class SpeculateConfig:
         verifier_model_name (str): Name of the verifier model.
         max_new_tokens (int): Maximum number of new tokens to generate.
         decode_method (str): Decoding method to use ('greedy' or 'random').
-        draft_tokens_num (int): Number of tokens to draft in each speculation step.
+        num_draft_tokens (int): Number of tokens to draft in each speculation step.
         streaming (bool): Whether to enable streaming output.
     """
 
@@ -20,7 +20,7 @@ class SpeculateConfig:
     verifier_model_name: str = ""
     max_new_tokens: int = 0
     decode_method: str = ""
-    draft_tokens_num: int = 0
+    num_draft_tokens: int = 0
     streaming: bool = False
 
     @staticmethod
@@ -42,7 +42,7 @@ class SpeculateConfig:
                 "max_new_tokens": general_configs.get("max_new_tokens", 1024),
                 "streaming": general_configs.get("streaming", False),
                 "drafter_model_name": config_dict["draft"]["model_name"],
-                "draft_tokens_num": config_dict["draft"].get("draft_tokens_num", 5),
+                "num_draft_tokens": config_dict["draft"].get("num_draft_tokens", 5),
                 "verifier_model_name": config_dict["verify"]["model_name"],
             }
         except KeyError as e:
@@ -65,5 +65,5 @@ class SpeculateConfig:
         if self.drafter_model_name == "" or self.verifier_model_name == "":
             raise ValueError("Model names must be specified in the config.")
 
-        if self.draft_tokens_num <= 0:
-            raise ValueError("draft_tokens_num must be a positive integer.")
+        if self.num_draft_tokens <= 0:
+            raise ValueError("num_draft_tokens must be a positive integer.")

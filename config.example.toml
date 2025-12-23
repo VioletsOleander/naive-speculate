@@ -5,7 +5,7 @@ streaming = false        # (Optional) Whether to enable streaming output, defaul
 
 [draft]
 model_name = "Qwen/Qwen3-0.6B" # (Required) Model name for draft generation
-draft_tokens_num = 5           # (Optional) Number of tokens to generate in the draft stage, default to 5
+num_draft_tokens = 5           # (Optional) Number of tokens to generate in the draft stage, default to 5
 
 [verify]
 model_name = "Qwen/Qwen3-1.7B" # (Required) Model name for verification stage

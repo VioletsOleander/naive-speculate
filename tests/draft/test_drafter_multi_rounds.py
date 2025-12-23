@@ -8,7 +8,7 @@ from naive_speculate.draft import Drafter
 from .constants import (
     CONFIG_DICT,
     DRAFT_MODEL_NAME,
-    DRAFT_TOKENS_NUM,
+    NUM_DRAFT_TOKENS,
     MAX_NEW_TOKENS,
     PROMPT_LENGTH,
 )
@@ -43,16 +43,16 @@ def test_drafter_multi_rounds(drafter: Drafter, hf_model: Qwen3ForCausalLM) -> N
         draft_ids, draft_logits = drafter.draft(drafter_inputs)
 
         # simulate rejection
-        rejected_idx = torch.randint(0, DRAFT_TOKENS_NUM + 1, (1,)).item()
+        rejected_idx = torch.randint(0, NUM_DRAFT_TOKENS + 1, (1,)).item()
         assert isinstance(rejected_idx, int)
-        assert 0 <= rejected_idx <= DRAFT_TOKENS_NUM
+        assert 0 <= rejected_idx <= NUM_DRAFT_TOKENS
 
         # remove the rejected tokens
         num_total_tokens = draft_ids.shape[1]
-        if rejected_idx == DRAFT_TOKENS_NUM:
+        if rejected_idx == NUM_DRAFT_TOKENS:
             num_tokens_remove = 0
         else:
-            num_tokens_remove = DRAFT_TOKENS_NUM - rejected_idx - 1
+            num_tokens_remove = NUM_DRAFT_TOKENS - rejected_idx - 1
         num_total_tokens -= num_tokens_remove
 
         # note that kv cache does not keep for the last token,
