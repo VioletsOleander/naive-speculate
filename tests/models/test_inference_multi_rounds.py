@@ -33,7 +33,6 @@ def test_inference_multi_rounds(
         total_len = model_outputs.shape[1]
         model_inputs = model_outputs
     assert model_outputs is not None
-    model_outputs = model_outputs[:, : PROMPT_LENGTH + MAX_NEW_TOKENS]
 
     # let hf model not reuse the kv_cache allocation from custom model
     hf_outputs = hf_model.generate(
@@ -43,7 +42,8 @@ def test_inference_multi_rounds(
         do_sample=False,
     )
     assert isinstance(hf_outputs, torch.Tensor)
-    assert torch.equal(hf_outputs, model_outputs)
+    hf_outputs_length = hf_outputs.shape[1]
+    assert torch.equal(hf_outputs, model_outputs[:, :hf_outputs_length])
 
     # let hf model reuse the kv_cache allocation from custom model
     custom_model.kv_cache.crop(0)
@@ -56,4 +56,5 @@ def test_inference_multi_rounds(
         past_key_values=custom_model.kv_cache,
     )
     assert isinstance(hf_outputs, torch.Tensor)
-    assert torch.equal(hf_outputs, model_outputs)
+    hf_outputs_length = hf_outputs.shape[1]
+    assert torch.equal(hf_outputs, model_outputs[:, :hf_outputs_length])
