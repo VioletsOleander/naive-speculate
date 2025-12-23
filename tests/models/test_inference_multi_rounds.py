@@ -56,4 +56,5 @@ def test_inference_multi_rounds(
         past_key_values=custom_model.kv_cache,
     )
     assert isinstance(hf_outputs, torch.Tensor)
+    hf_outputs_length = hf_outputs.shape[1]
     assert torch.equal(hf_outputs, model_outputs[:, :hf_outputs_length])
