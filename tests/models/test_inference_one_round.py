@@ -17,7 +17,7 @@ def test_inference_one_round(
     input_ids = torch.randint(0, hf_model.config.vocab_size, (1, PROMPT_LENGTH))
 
     custom_model._reset()
-    model_outputs = custom_model.inference(
+    model_outputs = custom_model.generate(
         input_ids=input_ids,
         max_new_tokens=MAX_NEW_TOKENS,
         decode_method="greedy",

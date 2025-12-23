@@ -1,4 +1,3 @@
-import warnings
 from typing import Literal, cast, overload
 
 import torch
@@ -13,22 +12,22 @@ from transformers import (
 class QwenModel:
     """Wrapper class for Qwen3ForCausalLM to simplify inference API and typing annotations.
 
-    Currently only supports batch_size = 1. Maybe later on I can add batch support, and further
+    Currently only supports `batch_size=1`. Maybe later on I can add batch support, and further
     including continuous batching, pd disaggregation, etc.
 
     Attributes:
         model (Qwen3ForCausalLM)
         model_config (Qwen3Config)
         kv_cache (DynamicCache)
-        prefill_done (bool)
-        decode_chunk_size (int): EOS token check interval during decoding, default to 8. Used as
-        a simple trick to reduce device synchronization overhead.
+        num_cached_tokens (int)
+        decode_chunk_size (int): EOS token check interval during decoding, default to 8.
+            Used as a simple trick to reduce device synchronization overhead.
     """
 
     model: Qwen3ForCausalLM
     model_config: Qwen3Config
     kv_cache: DynamicCache
-    prefill_done: bool
+    num_cached_tokens: int
     decode_chunk_size: int
 
     def __init__(self, model_name: str) -> None:
@@ -45,7 +44,7 @@ class QwenModel:
         )
         self.model_config = self.model.config
         self.kv_cache = DynamicCache(config=self.model.config)
-        self.prefill_done = False
+        self.num_cached_tokens = 0
         self.decode_chunk_size = 8  # just use default value here
 
     @property
@@ -53,13 +52,17 @@ class QwenModel:
         """Device where the model is located."""
         return self.model.device
 
-    def inference(
+    def generate(
         self,
         input_ids: torch.Tensor,
         max_new_tokens: int,
         decode_method: str,
     ) -> torch.Tensor:
         """Generate new tokens given the context.
+
+        KV cache are maintained internally across multiple calls.
+        For multiple rounds generation, just pass the entire sequence's token IDs as `input_ids`
+        each time.
 
         Args:
             input_ids (torch.Tensor): Input context's token IDs of shape `[batch_size, seq_len]`.
@@ -72,21 +75,26 @@ class QwenModel:
         if max_new_tokens <= 0:
             return input_ids
 
-        if not self.prefill_done:
+        num_total_tokens = input_ids.shape[1]
+
+        # Prefill
+        num_new_tokens = num_total_tokens - self.num_cached_tokens
+        if num_new_tokens > 1:
             input_ids = self._prefill(
-                input_ids=input_ids,
+                input_ids=input_ids[:, -num_new_tokens:],
                 decode_method=decode_method,
             )
             max_new_tokens = max_new_tokens - 1
-            self.prefill_done = True
 
-        output_ids = self._decode(
-            input_ids=input_ids,
-            max_new_tokens=max_new_tokens,
-            decode_method=decode_method,
-        )
+        # Decode
+        if max_new_tokens > 0:
+            input_ids = self._decode(
+                input_ids=input_ids,
+                max_new_tokens=max_new_tokens,
+                decode_method=decode_method,
+            )
 
-        return output_ids
+        return input_ids
 
     @overload
     def _prefill(
@@ -119,46 +127,48 @@ class QwenModel:
         decode_method: str,
         output_logits: bool = False,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
-        """Prefill the model with `input_ids` and generate one new token.
+        """Parallel process the input token IDs and generate the next token.
+
+        KV cache is updated internally.
 
         Return the updated `input_ids` (with one new token appended), and optionally the logits of
-        the context (except the first token) + the logits of the one new token, if `output_logits` is True.
+        the input tokens (except the first token) + the logits of the new generated token, if `output_logits` is True.
 
         Args:
-            input_ids (torch.Tensor): Input context's token IDs of shape `[batch_size, seq_len]`, the entire
-              sequence is used as quries for prefill.
+            input_ids (torch.Tensor): Input token IDs of shape `[batch_size, num_input_tokens]`.
             decode_method (str): Either "greedy" or "random".
             output_logits (bool): Additionally return logits or not.
 
         Returns:
-            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Updated token IDs of shape `[batch_size, seq_len + 1]`,
-              and optionally logits of shape `[batch_size, seq_len, vocab_size]`.
+            torch.Tensor | tuple[torch.Tensor, torch.Tensor]: Updated token IDs of shape `[batch_size, num_input_tokens + 1]`,
+              and optionally logits of shape `[batch_size, num_input_tokens, vocab_size]`.
 
         Raises:
             ValueError: If `decode_method` is unknown.
         """
         # 1. Forward
         # kv_cache is updated inside model.forward as a side effect
-        outputs = self.model.forward(
+        forward_out = self.model.forward(
             input_ids=cast(torch.LongTensor, input_ids),
             logits_to_keep=0,  # output all logits
             use_cache=True,
             past_key_values=self.kv_cache,
         )
-        assert outputs.logits is not None
+        assert forward_out.logits is not None
 
         # 2. Sample
         # copy to avoid keeping a hanging ref to full outputs.logits
-        next_token_logits = outputs.logits[:, -1, :].to(dtype=torch.float32, copy=True)
+        next_token_logits = forward_out.logits[:, -1].to(dtype=torch.float32, copy=True)
         next_token_ids = self._sample(next_token_logits, decode_method)
 
         # 3. Update
         input_ids = torch.cat([input_ids, next_token_ids], dim=-1)
 
+        self.num_cached_tokens = input_ids.shape[1] - 1
         if not output_logits:
             return input_ids
         else:
-            return input_ids, outputs.logits
+            return input_ids, forward_out.logits
 
     @overload
     def _decode(
@@ -195,20 +205,21 @@ class QwenModel:
         decode_method: str,
         output_logits: bool = False,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
-        """Decode new tokens auto-regressively.
+        """Process input token IDs and generate new tokens, autogressively repeat.
 
-        Should be called after `_prefill`.
-        Stops until `max_new_tokens` is reached or an EOS token is generated.
+        Stop when `max_new_tokens` is reached or an EOS token is generated.
 
-        Returns the updated `input_ids` (with new decoded tokens appended), and optionally the logits of
+        KV cache is updated internally.
+
+        Return the updated `input_ids` (with new decoded tokens appended), and optionally the logits of
         the new decoded tokens if `output_logits` is True.
 
         If `max_new_tokens <= 0`, no tokens will be generated, in this case, directly return `input_ids` , and
         optionally an empty tensor of shape `[batch_size, 0, vocab_size]` if `output_logits` is True.
 
         Args:
-            input_ids (torch.Tensor): Input context's token IDs of shape `[batch_size, seq_len]`. In each
-              internal iteration step, the last tokens will be sliced out as queries for generation.
+            input_ids (torch.Tensor): Input token IDs of shape `[batch_size, seq_len]`, the last tokens
+                will be sliced for using as query tokens.
             max_new_tokens (int): Limit on the number of new tokens to generate.
             decode_method (str): Either "greedy" or "random".
             output_logits (bool): Additionally return logits of decoded tokens or not.
@@ -221,9 +232,6 @@ class QwenModel:
             ValueError: If `decode_method` is unknown.
         """
         if max_new_tokens <= 0:
-            warnings.warn(
-                "`max_new_tokens` is non-positive in _decode; no tokens will be generated."
-            )
             if not output_logits:
                 return input_ids
             else:
@@ -234,11 +242,12 @@ class QwenModel:
                     device=input_ids.device,
                 )
 
-        logits = []
+        new_tokens_logits = []
+        num_new_tokens = 0
+
         max_chunks = (
             max_new_tokens + self.decode_chunk_size - 1
         ) // self.decode_chunk_size
-        num_new_tokens = 0
         for _ in range(max_chunks):
             decode_chunk_size = min(
                 self.decode_chunk_size, max_new_tokens - num_new_tokens
@@ -246,16 +255,16 @@ class QwenModel:
             for _ in range(decode_chunk_size):
                 # 1. Forward
                 # kv_cache is updated inside model.forward as a side effect
-                outputs = self.model.forward(
+                forward_out = self.model.forward(
                     input_ids=cast(torch.LongTensor, input_ids[:, -1:]),
                     logits_to_keep=1,
                     use_cache=True,
                     past_key_values=self.kv_cache,
                 )
-                assert outputs.logits is not None
+                assert forward_out.logits is not None
 
                 # 2. Sample
-                next_token_logits = outputs.logits[:, -1, :].to(dtype=torch.float32)
+                next_token_logits = forward_out.logits[:, -1].to(dtype=torch.float32)
                 next_token_ids = self._sample(next_token_logits, decode_method)
 
                 # 3. Update
@@ -263,22 +272,23 @@ class QwenModel:
 
                 num_new_tokens += 1
                 if output_logits:
-                    logits.append(outputs.logits)
+                    new_tokens_logits.append(forward_out.logits)
 
             # check for EOS token existence in the last chunk
             eos_token_id = cast(int, self.model_config.eos_token_id)
             is_eos = input_ids[0, -decode_chunk_size:] == eos_token_id
             eos_found, eos_token_idx = torch.max(is_eos, dim=0)
             if eos_found.item():
-                tokens_to_remove = decode_chunk_size - eos_token_idx - 1
-                input_ids = input_ids[:, :-tokens_to_remove]
-                logits = logits[:-tokens_to_remove]
+                num_excess_tokens = decode_chunk_size - eos_token_idx - 1
+                input_ids = input_ids[:, :-num_excess_tokens]
+                new_tokens_logits = new_tokens_logits[:-num_excess_tokens]
                 break
 
+        self.num_cached_tokens = input_ids.shape[1] - 1
         if not output_logits:
             return input_ids
         else:
-            return input_ids, torch.cat(logits, dim=1)
+            return input_ids, torch.cat(new_tokens_logits, dim=1)
 
     def _sample(
         self, next_token_logits: torch.Tensor, decode_method: str
@@ -312,7 +322,7 @@ class QwenModel:
         Primarily used for testing purpose.
         """
         self.kv_cache.crop(0)
-        self.prefill_done = False
+        self.num_cached_tokens = 0
 
     def _print_kvcache_shape(self) -> None:
         """Print model's kv cache shape.

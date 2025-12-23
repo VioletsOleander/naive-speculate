@@ -25,7 +25,7 @@ def test_inference_multi_rounds(
     while True:
         if total_len >= PROMPT_LENGTH + MAX_NEW_TOKENS:
             break
-        model_outputs = custom_model.inference(
+        model_outputs = custom_model.generate(
             input_ids=model_inputs,
             max_new_tokens=MAX_NEW_TOKENS_PER_ROUND,
             decode_method="greedy",
