@@ -244,12 +244,14 @@ class QwenModel:
                 if output_logits:
                     logits.append(outputs.logits)
 
-            # check for EOS token existance in the last chunk
+            # check for EOS token existence in the last chunk
             eos_token_id = cast(int, self.model_config.eos_token_id)
             is_eos = input_ids[0, -decode_chunk_size:] == eos_token_id
             eos_found, eos_token_idx = torch.max(is_eos, dim=0)
             if eos_found.item():
-                input_ids = input_ids[:, : -(decode_chunk_size - eos_token_idx - 1)]
+                tokens_to_remove = decode_chunk_size - eos_token_idx - 1
+                input_ids = input_ids[:, :-tokens_to_remove]
+                logits = logits[:-tokens_to_remove]
                 break
 
         if not output_logits:
