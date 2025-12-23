@@ -35,18 +35,11 @@ def compute_kl_divergences(
     return kl_divergences  # [draft_length]
 
 
-# TODO: Marginal case is ok now, but joint case needs more investigation,
-# maybe a different formulation is needed
 @pytest.mark.parametrize(
     "target_and_proposal_dists",
     [
         (50, 1),
-        pytest.param(
-            (10, 5),
-            marks=pytest.mark.xfail(
-                reason="Joint case needs more investigation",  # now normally this will pass
-            ),
-        ),
+        (10, 5),
     ],  # (vocab_size, draft_length)
     ids=["marginal", "joint"],
     indirect=True,
