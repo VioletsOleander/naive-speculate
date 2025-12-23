@@ -1,3 +1,4 @@
+import warnings
 from typing import Literal, cast, overload
 
 import torch
@@ -31,6 +32,11 @@ class QwenModel:
     decode_chunk_size: int
 
     def __init__(self, model_name: str) -> None:
+        """Initialize the QwenModel.
+
+        Args:
+            model_name (str)
+        """
         self.model = Qwen3ForCausalLM.from_pretrained(
             model_name,
             device_map="auto",
@@ -119,7 +125,8 @@ class QwenModel:
         the context (except the first token) + the logits of the one new token, if `output_logits` is True.
 
         Args:
-            input_ids (torch.Tensor): Input context's token IDs of shape `[batch_size, seq_len]`.
+            input_ids (torch.Tensor): Input context's token IDs of shape `[batch_size, seq_len]`, the entire
+              sequence is used as quries for prefill.
             decode_method (str): Either "greedy" or "random".
             output_logits (bool): Additionally return logits or not.
 
@@ -191,11 +198,17 @@ class QwenModel:
         """Decode new tokens auto-regressively.
 
         Should be called after `_prefill`.
-        Returns the updated `input_ids` (with new tokens appended), and optionally the logits of
-        the decoded tokens if `output_logits` is True.
+        Stops until `max_new_tokens` is reached or an EOS token is generated.
+
+        Returns the updated `input_ids` (with new decoded tokens appended), and optionally the logits of
+        the new decoded tokens if `output_logits` is True.
+
+        If `max_new_tokens <= 0`, no tokens will be generated, in this case, directly return `input_ids` , and
+        optionally an empty tensor of shape `[batch_size, 0, vocab_size]` if `output_logits` is True.
 
         Args:
-            input_ids (torch.Tensor): Input context's token IDs of shape `[batch_size, seq_len]`.
+            input_ids (torch.Tensor): Input context's token IDs of shape `[batch_size, seq_len]`. In each
+              internal iteration step, the last tokens will be sliced out as queries for generation.
             max_new_tokens (int): Limit on the number of new tokens to generate.
             decode_method (str): Either "greedy" or "random".
             output_logits (bool): Additionally return logits of decoded tokens or not.
@@ -208,10 +221,18 @@ class QwenModel:
             ValueError: If `decode_method` is unknown.
         """
         if max_new_tokens <= 0:
+            warnings.warn(
+                "`max_new_tokens` is non-positive in _decode; no tokens will be generated."
+            )
             if not output_logits:
                 return input_ids
             else:
-                return input_ids, torch.empty(0, device=self.device)
+                return input_ids, torch.empty(
+                    input_ids.shape[0],
+                    0,
+                    self.model_config.vocab_size,
+                    device=input_ids.device,
+                )
 
         logits = []
         max_chunks = (
