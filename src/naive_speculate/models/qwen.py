@@ -213,7 +213,7 @@ class QwenModel:
         decode_method: str,
         output_logits: bool = False,
     ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
-        """Process input token IDs and generate new tokens, autogressively repeat.
+        """Process input token IDs and generate new tokens, auto-regressively repeat.
 
         Stop when `max_new_tokens` is reached or an EOS token is generated.
 
