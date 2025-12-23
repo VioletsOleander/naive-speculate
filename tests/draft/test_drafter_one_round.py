@@ -5,7 +5,7 @@ from transformers.generation.utils import GenerateDecoderOnlyOutput
 
 from naive_speculate.draft import Drafter
 
-from .constants import CONFIG_DICT, DRAFT_MODEL_NAME, DRAFT_TOKENS_NUM, PROMPT_LENGTH
+from .constants import CONFIG_DICT, DRAFT_MODEL_NAME, NUM_DRAFT_TOKENS, PROMPT_LENGTH
 
 
 @pytest.mark.parametrize(
@@ -22,7 +22,7 @@ def test_drafter_one_round(drafter: Drafter, hf_model: Qwen3ForCausalLM) -> None
     hf_outputs = hf_model.generate(
         input_ids=input_ids,
         attention_mask=torch.ones_like(input_ids),
-        max_new_tokens=DRAFT_TOKENS_NUM,
+        max_new_tokens=NUM_DRAFT_TOKENS,
         do_sample=False,
         use_cache=True,
         past_key_values=drafter.kv_cache,

@@ -10,12 +10,12 @@ class Drafter(QwenModel):
     """Drafter model for generating candidate tokens.
 
     Attributes:
-        draft_tokens_num (int): Number of tokens to draft in each round.
+        num_draft_tokens (int): Number of tokens to draft in each round.
         decode_method (str): Should be 'greedy' or 'random'.
         logger (Logger)
     """
 
-    draft_tokens_num: int
+    num_draft_tokens: int
     decode_method: str
     logger: Logger
 
@@ -27,7 +27,7 @@ class Drafter(QwenModel):
             logger (Logger | None): If None, a dummy logger will be used, which ignores all logging calls.
         """
         super().__init__(config.drafter_model_name)
-        self.draft_tokens_num = config.draft_tokens_num
+        self.num_draft_tokens = config.num_draft_tokens
         self.decode_method = config.decode_method
         self.logger = logger_or_dummy(logger)
 
@@ -46,13 +46,13 @@ class Drafter(QwenModel):
         Returns:
             tuple[torch.Tensor, torch.Tensor]: The updated token IDs and logits of the generated draft tokens.
             Shapes:
-              - updated_input_ids: `[batch_size, seq_len + draft_tokens_num]`
-              - candidate_logits: `[batch_size, draft_tokens_num, vocab_size]`
+              - updated_input_ids: `[batch_size, seq_len + num_draft_tokens]`
+              - candidate_logits: `[batch_size, num_draft_tokens, vocab_size]`
 
         Raises:
             ValueError: If `self.decode_method` is not supported.
         """
-        draft_tokens_num = self.draft_tokens_num
+        num_draft_tokens = self.num_draft_tokens
 
         if not self.prefill_done:
             input_ids, candidate_logits = self._prefill(
@@ -61,11 +61,11 @@ class Drafter(QwenModel):
                 output_logits=True,
             )
             new_token_logits = candidate_logits[:, -1:, :]
-            draft_tokens_num -= 1
+            num_draft_tokens -= 1
 
         input_ids, candidate_logits = self._decode(
             input_ids=input_ids,
-            max_new_tokens=draft_tokens_num,
+            max_new_tokens=num_draft_tokens,
             decode_method=self.decode_method,
             output_logits=True,
         )

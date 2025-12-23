@@ -6,7 +6,7 @@ CONFIG_DICT = {
     "max_new_tokens": 32768,
     "decode_method": "greedy",
     "drafter_model_name": "Qwen/Qwen3-0.6B",
-    "draft_tokens_num": 32768,
+    "num_draft_tokens": 32768,
     "verifier_model_name": "Qwen/Qwen3-1.7B",
 }
 
