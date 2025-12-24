@@ -1,8 +1,12 @@
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
+
+type DecodeMethod = Literal["greedy", "random"]
 
 
+# TODO: migrate to pydantic for validation
 @dataclass
 class SpeculateConfig:
     """Configuration for the speculative generation process.
@@ -19,7 +23,7 @@ class SpeculateConfig:
     drafter_model_name: str = ""
     verifier_model_name: str = ""
     max_new_tokens: int = 0
-    decode_method: str = ""
+    decode_method: Literal["greedy", "random"] = "greedy"
     num_draft_tokens: int = 0
     streaming: bool = False
 
