@@ -22,8 +22,6 @@ class BaseInferencer(ABC):
 
     Attributes:
         model (PreTrainedModel): The underlying `transformers` model instance.
-        decode_chunk_size (int): EOS token check interval during decoding, default to 8.
-            Used as a simple trick to reduce device synchronization overhead.
     """
 
     model: PreTrainedModel
@@ -39,7 +37,7 @@ class BaseInferencer(ABC):
 
     @property
     @abstractmethod
-    def eos_token_id(self) -> int:
+    def _eos_token_id(self) -> int:
         """The EOS token id from the model configuration.
 
         Raises:
@@ -59,6 +57,7 @@ class BaseInferencer(ABC):
         Returns:
             torch.Tensor: Computed logits of shape `[batch_size, num_query_tokens, vocab_size]`.
         """
+        ...
 
     def _generation_stream(
         self,
@@ -104,15 +103,15 @@ class BaseInferencer(ABC):
         (except for the first tokens) and the newly generated token.
 
         Args:
-            input_ids (torch.Tensor): Input token ids of shape `[batch_size, num_query_tokens]`.
-            sample_startegy (SampleStartegy): Token sampling strategy during prefill.
+            query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, num_query_tokens]`.
+            sample_strategy (SampleStrategy): Token sampling strategy during prefill.
 
         Returns:
             PrefillOutput: Collection of output token ids of shape
                 `[batch_size, 1]` and logits of shape `[batch_size, num_query_tokens, vocab_size]`.
 
         Raises:
-            ValueError: If `sample_startegy` is unknown.
+            ValueError: If `sample_strategy` is unknown.
         """
         output_collection = OutputCollection()
 
@@ -146,7 +145,7 @@ class BaseInferencer(ABC):
         Args:
             query_token_ids (torch.Tensor): Input token ids of shape `[batch_size, query_tokens_num]`
             max_new_tokens (int): Limit on the number of new tokens to generate.
-            sample_stragey (SampleStrategy): Token sampling strategy during decoding.
+            sample_strategy (SampleStrategy): Token sampling strategy during decoding.
 
         Returns:
             DecodeOutput: Contains generated new token ids of shape
@@ -171,7 +170,7 @@ class BaseInferencer(ABC):
 
             # Check for EOS token in the newly generated tokens
             # currently only reasonable for batch_size=1
-            if (output_ids == self.eos_token_id).any().item():
+            if (output_ids == self._eos_token_id).any().item():
                 break
 
         return DecodeOutput._make(output_collection.finalize())

@@ -19,15 +19,15 @@ class Inferencer(Protocol):
         (except for the very first tokens) and the newly generated tokens.
 
         Args:
-            input_ids (torch.Tensor): Input token ids of shape `[batch_size, num_query_tokens]`.
-            sample_startegy (SampleStartegy): Token sampling strategy for generating new tokens.
+            query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, num_query_tokens]`.
+            sample_strategy (SampleStrategy): Token sampling strategy for generating new tokens.
 
         Returns:
             PrefillOutput: Contains generated new token ids of shape `[batch_size, 1]`
-                and token logits of shape `[batch_size, num_query_tokens, vocab_size]
+                and token logits of shape `[batch_size, num_query_tokens, vocab_size]`.
 
         Raises:
-            ValueError: If `sample_startegy` is unknown.
+            ValueError: If `sample_strategy` is unknown.
         """
         ...
 

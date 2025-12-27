@@ -15,8 +15,9 @@ class PrefillOutput(NamedTuple):
     """Prefill output structure.
 
     Attributes:
-        output_ids (torch.Tensor): The updated token ids after prefill.
-        output_logits (torch.Tensor): The logits of newly generated tokens.
+        output_ids (torch.Tensor): The newly generated token ids after prefill.
+        output_logits (torch.Tensor): The logits of the query tokens (excluding the first ones)
+            and the newly generated tokens.
     """
 
     output_ids: torch.Tensor
@@ -27,7 +28,7 @@ class DecodeOutput(NamedTuple):
     """Decode output structure.
 
     Attributes:
-        output_ids (torch.Tensor): The updated token ids after decode.
+        output_ids (torch.Tensor): The newly generated token ids after decode.
         output_logits (torch.Tensor): The logits of newly generated tokens.
     """
 
