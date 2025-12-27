@@ -13,14 +13,14 @@ def test_inference_consistency(custom_model: QwenModel) -> None:
     )
 
     custom_model._reset()
-    output1 = custom_model.inference(
+    output1 = custom_model.generate(
         input_ids=input_ids,
         max_new_tokens=MAX_NEW_TOKENS,
         decode_method="greedy",
     )
 
     custom_model._reset()
-    output2 = custom_model.inference(
+    output2 = custom_model.generate(
         input_ids=input_ids,
         max_new_tokens=MAX_NEW_TOKENS,
         decode_method="greedy",
