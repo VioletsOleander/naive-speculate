@@ -1,8 +1,9 @@
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
-import torch
+if TYPE_CHECKING:
+    import torch
 
-from .types import DecodeOutput, PrefillOutput, SampleStrategy
+    from .types import DecodeOutput, PrefillOutput, SampleStrategy
 
 
 class Inferencer(Protocol):

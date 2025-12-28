@@ -1,7 +1,8 @@
 from enum import StrEnum
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
-import torch
+if TYPE_CHECKING:
+    import torch
 
 
 class SampleStrategy(StrEnum):

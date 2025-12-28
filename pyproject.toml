@@ -89,6 +89,8 @@ ignore = [
     "TRY003",
     # not requires redundant message variable creation in each exception raise
     "EM101",
+    # not requires trailing comma in function arguments
+    "COM812",
 ]
 
 [tool.ruff.lint.pydocstyle]

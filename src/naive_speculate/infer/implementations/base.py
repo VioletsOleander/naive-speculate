@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Generator
+from typing import TYPE_CHECKING
 
 import torch
 
@@ -7,6 +7,9 @@ from naive_speculate.infer import DecodeOutput, PrefillOutput, SampleStrategy
 
 from .utils.collection import OutputCollection
 from .utils.sample import sample_tokens
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 class BaseInferencer(ABC):
@@ -148,7 +151,7 @@ class BaseInferencer(ABC):
         stream = self._generation_stream(
             query_token_ids=query_token_ids, sample_strategy=sample_strategy
         )
-        for _ in range(0, max_new_tokens):
+        for _ in range(max_new_tokens):
             output_ids, output_logits = next(stream)
             output_collection.update(output_ids, output_logits)
 

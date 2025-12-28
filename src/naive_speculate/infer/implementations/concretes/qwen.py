@@ -1,7 +1,6 @@
 from functools import cached_property
-from typing import cast, override
+from typing import TYPE_CHECKING, override
 
-import torch
 from transformers import (
     DynamicCache,
     DynamicLayer,
@@ -9,6 +8,9 @@ from transformers import (
 )
 
 from naive_speculate.infer.implementations.chunkwise import ChunkwiseDecodeInferencer
+
+if TYPE_CHECKING:
+    import torch
 
 
 class QwenInferencer(ChunkwiseDecodeInferencer):
@@ -57,14 +59,15 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
             query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, num_query_tokens]`.
 
         Returns:
-            torch.Tensor: The logits output from the model of shape `[batch_size, num_query_tokens, vocab_size]`.
+            torch.Tensor: The logits output from the model of shape
+                `[batch_size, num_query_tokens, vocab_size]`.
 
         Raises:
             ValueError: If the model forward output does not contain logits.
         """
-        input_ids = cast(torch.LongTensor, query_token_ids)
+        input_ids = query_token_ids
         forward_out = self.qwen_model.forward(
-            input_ids=input_ids,
+            input_ids=input_ids,  # type: ignore[arg-type]
             logits_to_keep=0,  # keeps all logits
             use_cache=True,
             past_key_values=self.kv_cache,
@@ -90,7 +93,7 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
         Primarily used for debugging purpose.
         It is assumed that all layers have the same kv cache shape.
         """
-        layer = cast(DynamicLayer, self.kv_cache.layers[0])
+        layer: DynamicLayer = self.kv_cache.layers[0]  # type: ignore[index]
         if layer.keys is not None:
             print(f"Keys shape: {layer.keys.shape}", end=", ")
         else:
