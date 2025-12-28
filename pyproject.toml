@@ -74,7 +74,7 @@ select = [
 ]
 
 ignore = [
-    # not requies docstring everywhere
+    # not requires docstring everywhere
     "D100",
     "D101",
     "D102",
