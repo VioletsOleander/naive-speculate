@@ -40,7 +40,8 @@ class Inferencer(Protocol):
         """Process `query_token_ids` and auto-regressively generate next new tokens.
 
         KV cache is maintained internally, so expecting `query_token_ids` to
-        contain only the new query tokens since the last call to `prefill` or `decode`.
+        contain only the new query tokens since the last call to `prefill` or `decode`,
+        i.e., of shape `[batch_size, 1]`.
 
         Stop when `max_new_tokens` is reached or an EOS token is generated.
 
@@ -51,7 +52,7 @@ class Inferencer(Protocol):
         both `DecodeOutput` fields will be empty tensors.
 
         Args:
-            query_token_ids (torch.Tensor): Input token ids of shape `[batch_size, query_tokens_num]`
+            query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, 1]`
             max_new_tokens (int): Limit on the number of new tokens to generate.
             sample_strategy (SampleStrategy): Token sampling strategy during decoding.
 

@@ -9,8 +9,8 @@ class OutputCollection:
     decode or prefill process, and call `finalize` method to get the final collected outputs.
 
     Attributes:
-        output_ids (list[torch.Tensor]): Collected output ids.
-        output_logits (list[torch.Tensor]): Collected output logits.
+        output_ids (list[torch.Tensor]): Collected output ids, each of shape `[batch_size, 1]`.
+        output_logits (list[torch.Tensor]): Collected output logits, each of shape `[batch_size, 1, vocab_size]`.
     """
 
     _output_ids: list[torch.Tensor]
@@ -35,24 +35,31 @@ class OutputCollection:
         self._output_ids = []
         self._output_logits = []
 
-    def rfind(self, token_id: int) -> int:
-        """Find the last occurrence of a token id in the collected output ids.
+    def find(self, token_id: int, start_idx: int) -> int:
+        """Find the first occurrence of a token id in the collected output ids, starting from `start_idx`.
+
+        Incur once device synchronization.
+
+        Currently only reasonable for batch_size=1 scenarios.
 
         Args:
             token_id (int): The token id to search for.
+            start_idx (int): The index to start searching from.
 
         Returns:
-            int: The index of the last occurrence of the token id, or -1 if not found.
+            int: The index of the first occurrence of the token id within the search length.
+                -1 if not found.
         """
-        if not self._output_ids:
+        if not self._output_ids or start_idx < 0:
             return -1
 
-        concatenated_ids = torch.cat(self._output_ids, dim=1)
-        flattened_ids = concatenated_ids.view(-1).tolist()
+        tokens_to_search = self._output_ids[start_idx:]
+        tokens_to_search = torch.cat(tokens_to_search, dim=1).squeeze(0).cpu()
 
-        for index in range(len(flattened_ids) - 1, -1, -1):
-            if flattened_ids[index] == token_id:
-                return index
+        token_found, token_idx = torch.max((tokens_to_search == token_id), dim=0)
+
+        if token_found.item():
+            return start_idx + int(token_idx.item())
 
         return -1
 

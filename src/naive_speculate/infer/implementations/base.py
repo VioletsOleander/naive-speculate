@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from collections.abc import Generator
 
 import torch
-from transformers import PreTrainedModel
 
 from naive_speculate.infer import DecodeOutput, PrefillOutput, SampleStrategy
 
@@ -17,37 +16,22 @@ class BaseInferencer(ABC):
     for `prefill` and `decode` methods.
 
     BaseInferencer expects the inheriting class to implement the following abstract methods:
-    - `_forward`: Forward the model with query token ids and return the computed logits.
-    - `_eos_token_id`: Return the EOS token id according to the model configuration.
-
-    Attributes:
-        model (PreTrainedModel): The underlying `transformers` model instance.
+    - `_forward`: Forward with query token ids and return the computed logits.
+    - `_eos_token_id`: Return the EOS token id.
     """
 
-    model: PreTrainedModel
-
-    def __init__(self, model: PreTrainedModel) -> None:
-        """Load the underlying model instance.
-
-        Args:
-            model (PreTrainedModel): The underlying `transformers` model instance.
-        """
+    def __init__(self) -> None:
         super().__init__()
-        self.model = model
 
     @property
     @abstractmethod
     def _eos_token_id(self) -> int:
-        """The EOS token id from the model configuration.
-
-        Raises:
-            ValueError: If the model does not have an `eos_token_id` configured.
-        """
+        """The EOS token id."""
         ...
 
     @abstractmethod
     def _forward(self, query_token_ids: torch.Tensor) -> torch.Tensor:
-        """Forward the model with `query_token_ids` and return the computed logits.
+        """Forward with `query_token_ids` and return the computed logits.
 
         KV cache is expected to be managed by this method's implementation internally.
 
@@ -143,7 +127,7 @@ class BaseInferencer(ABC):
         If `max_new_tokens <= 0`, return DecodeOutput with empty tensors for both fields.
 
         Args:
-            query_token_ids (torch.Tensor): Input token ids of shape `[batch_size, query_tokens_num]`
+            query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, 1]`
             max_new_tokens (int): Limit on the number of new tokens to generate.
             sample_strategy (SampleStrategy): Token sampling strategy during decoding.
 
