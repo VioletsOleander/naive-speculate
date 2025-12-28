@@ -26,3 +26,75 @@ dev = [
     "pytest>=9.0.1",
     "pytest-repeat>=0.9.4",
 ]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "ANN",
+    "S",
+    "BLE",
+    "FBT",
+    "B",
+    "A",
+    "COM",
+    "C4",
+    "EM",
+    "ISC",
+    "ICN",
+    "LOG",
+    "G",
+    "PIE",
+    "PT",
+    "Q",
+    "RET",
+    "SLF",
+    "SIM",
+    "SLOT",
+    "TID",
+    "TC",
+    "ARG",
+    "PTH",
+    "FLY",
+    "C90",
+    "N",
+    "PERF",
+    "E",
+    "W",
+    "DOC",
+    "D",
+    "F",
+    "PGH",
+    "PL",
+    "UP",
+    "FURB",
+    "RUF",
+    "TRY",
+]
+
+ignore = [
+    # not requies docstring everywhere
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    # not requires line length limit for docstrings
+    "E501",
+    # not requires create custom exception class everywhere
+    "TRY003",
+    # not requires reduncent message variable creation in each exception raise
+    "EM101",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# allow use asserts in tests
+"tests/**" = ["S101"]
+
