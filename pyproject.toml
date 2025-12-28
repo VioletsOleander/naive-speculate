@@ -87,7 +87,7 @@ ignore = [
     "E501",
     # not requires create custom exception class everywhere
     "TRY003",
-    # not requires reduncent message variable creation in each exception raise
+    # not requires redundant message variable creation in each exception raise
     "EM101",
 ]
 
