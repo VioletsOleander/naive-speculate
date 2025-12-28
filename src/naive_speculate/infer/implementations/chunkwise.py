@@ -13,7 +13,7 @@ class ChunkwiseDecodeInferencer(BaseInferencer):
     - implements `Inferencer` Protocol.
     - decode new tokens in chunks to reduce device synchronization overhead.
 
-    ChuknwiseDecodeInferencers expect the inheriting class to implement the following abstract methods:
+    ChunkwiseDecodeInferencers expect the inheriting class to implement the following abstract methods:
     - `_forward`: Forward the model with query token ids and return the computed logits.
     - `_eos_token_id`: Return the EOS token id according to the model configuration.
 
@@ -37,7 +37,7 @@ class ChunkwiseDecodeInferencer(BaseInferencer):
     ) -> DecodeOutput:
         """Process `query_token_ids` and generate new tokens, auto-regressively repeat.
 
-        Check for EOS token after each `self._decode_chunk_size` generation iterations.
+        Check for EOS token after each `self.decode_chunk_size` generation iterations.
 
         Stop when `max_new_tokens` is reached or an EOS token is generated.
 
@@ -83,8 +83,8 @@ class ChunkwiseDecodeInferencer(BaseInferencer):
             num_new_tokens += decode_chunk_size
 
             # 2. Check for EOS token existence in the last chunk
-            eos_token_idx = output_collection.rfind(
-                self._eos_token_id, decode_chunk_size
+            eos_token_idx = output_collection.find(
+                self._eos_token_id, start_idx=num_new_tokens - decode_chunk_size
             )
 
             if eos_token_idx != -1:

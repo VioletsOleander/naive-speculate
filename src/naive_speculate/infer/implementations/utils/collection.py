@@ -35,8 +35,8 @@ class OutputCollection:
         self._output_ids = []
         self._output_logits = []
 
-    def rfind(self, token_id: int, search_length: int) -> int:
-        """Find the last occurrence of a token id in the collected output ids.
+    def find(self, token_id: int, start_idx: int) -> int:
+        """Find the first occurrence of a token id in the collected output ids, starting from `start_idx`.
 
         Incur once device synchronization.
 
@@ -44,23 +44,22 @@ class OutputCollection:
 
         Args:
             token_id (int): The token id to search for.
-            search_length (int): The maximum number of tokens to search back.
+            start_idx (int): The index to start searching from.
 
         Returns:
-            int: The index of the last occurrence of the token id within the search length.
+            int: The index of the first occurrence of the token id within the search length.
                 -1 if not found.
         """
-        if not self._output_ids or search_length <= 0:
+        if not self._output_ids or start_idx < 0:
             return -1
 
-        search_length = min(search_length, len(self._output_ids))
-        tokens_to_search = self._output_ids[-search_length:]
+        tokens_to_search = self._output_ids[start_idx:]
         tokens_to_search = torch.cat(tokens_to_search, dim=1).squeeze(0).cpu()
 
         token_found, token_idx = torch.max((tokens_to_search == token_id), dim=0)
 
         if token_found.item():
-            return len(self._output_ids) - search_length + int(token_idx.item())
+            return start_idx + int(token_idx.item())
 
         return -1
 
