@@ -58,8 +58,8 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
             kv_cache (KVCache): Past key value tensors.
 
         Returns:
-            torch.Tensor: The logits output from the model of shape
-                `[batch_size, num_query_tokens, vocab_size]`.
+            torch.Tensor: The forward pass output, containing logits output from the model of shape
+                `[batch_size, num_query_tokens, vocab_size]`, and empty tuples for the other two fields.
 
         Raises:
             TypeError: If the `kv_cache` is not of type `DynamicNoUpdateCache`.

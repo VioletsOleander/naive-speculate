@@ -39,7 +39,7 @@ class KVCache(Protocol):
     def update(self, keys: Sequence[torch.Tensor], values: Sequence[torch.Tensor]) -> None:
         """Update the storage with new key and value tensors.
 
-        `keys` and `values` are sequences of tensors. The lengh of the sequences
+        `keys` and `values` are sequences of tensors. The length of the sequences
         should be equal to the number of transformer layers, and each tensor
         in the sequences corresponds to the key or value tensor of a transformer layer.
 
@@ -96,7 +96,6 @@ class Inferencer(Protocol):
         Returns:
             PrefillOutput: Contains generated new token ids of shape `[batch_size, 1]`
                 and token logits of shape `[batch_size, num_query_tokens, vocab_size]`.
-                and the key and value tensors for query tokens.
 
         Raises:
             ValueError: If `sample_strategy` is unknown.
@@ -130,7 +129,7 @@ class Inferencer(Protocol):
         - the logits corresponding to the newly generated tokens.
 
         If `max_new_tokens <= 0`, no new tokens will be generated, and
-        `DecodeOutput` will be filled empty tensors.
+        `DecodeOutput` will be filled with empty tensors.
 
         Args:
             query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, 1]`
