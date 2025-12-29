@@ -10,8 +10,8 @@ class DraftResult(NamedTuple):
     """The result of a drafting operation.
 
     Attributes:
-        draft_token_ids: The token IDs of the drafted tokens.
-        draft_token_logits: The logits corresponding to the drafted tokens.
+        draft_token_ids: The token IDs of the drafted tokens. Shape `[batch_size, num_draft_tokens]`.
+        draft_token_logits: The logits corresponding to the drafted tokens. Shape `[batch_size, num_draft_tokens, vocab_size]`.
     """
 
     draft_token_ids: torch.Tensor
