@@ -1,3 +1,3 @@
-from .drafter import Drafter
+from .interfaces import Drafter, DraftResult
 
-__all__ = ["Drafter"]
+__all__ = ["DraftResult", "Drafter"]

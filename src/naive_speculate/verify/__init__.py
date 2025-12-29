@@ -1,3 +1,3 @@
-from .verifier import Verifier, greedy_match, speculative_sample
+from .interfaces import Verifier, VerifyResult
 
-__all__ = ["Verifier", "speculative_sample", "greedy_match"]
+__all__ = ["Verifier", "VerifyResult"]
