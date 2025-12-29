@@ -1,9 +1,8 @@
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
 
-type DecodeMethod = Literal["greedy", "random"]
+from .sample import SampleStrategy
 
 
 # TODO: migrate to pydantic for validation
@@ -15,7 +14,7 @@ class SpeculateConfig:
         drafter_model_name (str): Name of the drafter model.
         verifier_model_name (str): Name of the verifier model.
         max_new_tokens (int): Maximum number of new tokens to generate.
-        decode_method (str): Decoding method to use ('greedy' or 'random').
+        sample_strategy (SampleStrategy): Sampling strategy for generation.
         num_draft_tokens (int): Number of tokens to draft in each speculation step.
         streaming (bool): Whether to enable streaming output.
     """
@@ -23,8 +22,8 @@ class SpeculateConfig:
     drafter_model_name: str = ""
     verifier_model_name: str = ""
     max_new_tokens: int = 0
-    decode_method: Literal["greedy", "random"] = "greedy"
     num_draft_tokens: int = 0
+    sample_strategy: SampleStrategy = SampleStrategy.GREEDY
     streaming: bool = False
 
     @staticmethod
@@ -35,7 +34,7 @@ class SpeculateConfig:
 
     @staticmethod
     def from_file(config_path: str) -> SpeculateConfig:
-        with open(Path(config_path), "rb") as f:
+        with Path(config_path).open("rb") as f:
             config_dict = tomllib.load(f)
 
         general_configs = config_dict.get("general", {})
@@ -50,7 +49,7 @@ class SpeculateConfig:
                 "verifier_model_name": config_dict["verify"]["model_name"],
             }
         except KeyError as e:
-            raise KeyError(f"Missing required configuration key: {e}")
+            raise KeyError(f"Missing required configuration key: {e}") from None
 
         return SpeculateConfig.from_dict(config_dict)
 
@@ -60,9 +59,6 @@ class SpeculateConfig:
         Raises:
             ValueError: If any configuration value is invalid.
         """
-        if self.decode_method not in ["greedy", "random"]:
-            raise ValueError("Decode method must be either 'greedy' or 'random'.")
-
         if self.max_new_tokens <= 0:
             raise ValueError("max_new_tokens must be a positive integer.")
 
