@@ -1,8 +1,8 @@
-from .interfaces import DecodeOutput, Inferencer, PrefillOutput, SampleStrategy
+from .interfaces import DecodeOutput, Inferencer, KVCache, PrefillOutput
 
 __all__ = [
-    "Inferencer",
-    "PrefillOutput",
     "DecodeOutput",
-    "SampleStrategy",
+    "Inferencer",
+    "KVCache",
+    "PrefillOutput",
 ]
