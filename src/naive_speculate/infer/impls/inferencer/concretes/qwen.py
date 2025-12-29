@@ -1,16 +1,16 @@
 from functools import cached_property
 from typing import TYPE_CHECKING, override
 
-from transformers import (
-    DynamicCache,
-    DynamicLayer,
-    Qwen3ForCausalLM,
-)
+from transformers import Qwen3ForCausalLM
 
-from naive_speculate.infer.implementations.chunkwise import ChunkwiseDecodeInferencer
+from naive_speculate.infer.impls.inferencer.abstracts import ForwardOutput
+from naive_speculate.infer.impls.inferencer.abstracts.chunkwise import ChunkwiseDecodeInferencer
+from naive_speculate.infer.impls.kvcache.dynamic_cache import DynamicNoUpdateCache
 
 if TYPE_CHECKING:
     import torch
+
+    from naive_speculate.infer import KVCache
 
 
 class QwenInferencer(ChunkwiseDecodeInferencer):
@@ -18,11 +18,9 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
 
     Attributes:
         qwen_model (Qwen3ForCausalLM): The Qwen model for causal language modeling.
-        kv_cache (DynamicCache): The dynamic key-value cache for the model.
     """
 
     qwen_model: Qwen3ForCausalLM
-    kv_cache: DynamicCache
 
     def __init__(self, model_name: str) -> None:
         super().__init__()
@@ -32,7 +30,6 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
             torch_dtype="auto",
             local_files_only=True,
         )
-        self.kv_cache = DynamicCache(config=self.qwen_model.config)
 
     @cached_property
     @override
@@ -48,58 +45,40 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
         return eos_token_id
 
     @override
-    def _forward(self, query_token_ids: torch.Tensor) -> torch.Tensor:
+    def _forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> ForwardOutput:
         """Forward the model with `query_token_ids`.
 
-        Update the kv cache internally.
+        IMPORTANT: This method update the kv cache internally. Therefore,
+        expect the `update` method of `kv_cache` to be no-op.
 
         Return the logits output from the model.
 
         Args:
             query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, num_query_tokens]`.
+            kv_cache (KVCache): Past key value tensors.
 
         Returns:
-            torch.Tensor: The logits output from the model of shape
-                `[batch_size, num_query_tokens, vocab_size]`.
+            torch.Tensor: The forward pass output, containing logits output from the model of shape
+                `[batch_size, num_query_tokens, vocab_size]`, and empty tuples for the other two fields.
 
         Raises:
+            TypeError: If the `kv_cache` is not of type `DynamicNoUpdateCache`.
             ValueError: If the model forward output does not contain logits.
         """
+        if not isinstance(kv_cache, DynamicNoUpdateCache):
+            raise TypeError(
+                f"Expected kv_cache to be of type DynamicNoUpdateCache, but got {type(kv_cache)}."
+            )
+
         input_ids = query_token_ids
         forward_out = self.qwen_model.forward(
             input_ids=input_ids,  # type: ignore[arg-type]
             logits_to_keep=0,  # keeps all logits
             use_cache=True,
-            past_key_values=self.kv_cache,
+            past_key_values=kv_cache.cache,
         )
 
         if forward_out.logits is None:
             raise ValueError("Model forward output does not contain logits.")
 
-        return forward_out.logits
-
-    # TODO: move these dirty debugging methods to testing module, using monkey patching
-    # or other techniques during testing only.
-    def _reset(self) -> None:
-        """Reset the model state for a new inference session.
-
-        Primarily used for testing purpose.
-        """
-        self.kv_cache.crop(0)
-
-    def _print_kvcache_shape(self) -> None:
-        """Print model's kv cache shape.
-
-        Primarily used for debugging purpose.
-        It is assumed that all layers have the same kv cache shape.
-        """
-        layer: DynamicLayer = self.kv_cache.layers[0]  # type: ignore[index]
-        if layer.keys is not None:
-            print(f"Keys shape: {layer.keys.shape}", end=", ")
-        else:
-            print("Keys shape: None", end=", ")
-
-        if layer.values is not None:
-            print(f"Values shape: {layer.values.shape}")
-        else:
-            print("Values shape: None")
+        return ForwardOutput._make((forward_out.logits, (), ()))

@@ -1,9 +1,15 @@
+from typing import TYPE_CHECKING
+
 import torch
 
-from naive_speculate.infer import DecodeOutput, SampleStrategy
+from naive_speculate.infer import DecodeOutput
 
 from .base import BaseInferencer
 from .utils.collection import OutputCollection
+
+if TYPE_CHECKING:
+    from naive_speculate.infer import KVCache
+    from naive_speculate.utils.sample import SampleStrategy
 
 
 class ChunkwiseDecodeInferencer(BaseInferencer):
@@ -32,6 +38,7 @@ class ChunkwiseDecodeInferencer(BaseInferencer):
     def decode(
         self,
         query_token_ids: torch.Tensor,
+        kv_cache: KVCache,
         max_new_tokens: int,
         sample_strategy: SampleStrategy,
     ) -> DecodeOutput:
@@ -48,6 +55,7 @@ class ChunkwiseDecodeInferencer(BaseInferencer):
 
         Args:
             query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, 1]`
+            kv_cache (KVCache): Key-Value cache corresponding to past tokens.
             max_new_tokens (int): Limit on the number of new tokens to generate.
             sample_strategy (SampleStrategy): Token sampling strategy during decoding.
 
@@ -66,7 +74,7 @@ class ChunkwiseDecodeInferencer(BaseInferencer):
             return DecodeOutput._make(output_collection.finalize())
 
         stream = self._generation_stream(
-            query_token_ids=query_token_ids, sample_strategy=sample_strategy
+            query_token_ids=query_token_ids, kv_cache=kv_cache, sample_strategy=sample_strategy
         )
 
         num_new_tokens = 0
