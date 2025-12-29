@@ -49,7 +49,7 @@ class SpeculateConfig:
                 "verifier_model_name": config_dict["verify"]["model_name"],
             }
         except KeyError as e:
-            raise KeyError(f"Missing required configuration key: {e}") from None
+            raise KeyError(f"Missing required configuration key: {e}") from e
 
         return SpeculateConfig.from_dict(config_dict)
 

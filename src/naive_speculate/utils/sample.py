@@ -4,7 +4,14 @@ import torch
 
 
 class SampleStrategy(StrEnum):
-    """Sampling strategies for token generation."""
+    """Sampling strategies for token generation.
+
+    Attributes:
+        RANDOM = "random": Sample tokens probabilistically according to
+            the softmax distribution over `token_logits`.
+        GREEDY = "greedy": Always select the token with
+            the highest probability (argmax) from `token_logits`.
+    """
 
     RANDOM = "random"
     GREEDY = "greedy"
