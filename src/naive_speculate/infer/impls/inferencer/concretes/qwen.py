@@ -50,7 +50,7 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
     def _forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> ForwardOutput:
         """Forward the model with `query_token_ids`.
 
-        This method update the kv cache internally. Therefore,
+        This method updates the kv cache internally. Therefore,
         expect the `update` method of `kv_cache` to be no-op.
         In other words, expect `kv_cache` to be of type `DynamicNoUpdateCache`.
 
