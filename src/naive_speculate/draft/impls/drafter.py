@@ -45,41 +45,44 @@ class Drafter:
 
         Raises:
             ValueError: If `num_query_tokens` is not positive.
-            ValueError: If `self.sample_strategy` is not supported.
+            ValueError: If `num_draft_tokens` is not positive.
+            ValueError: If `sample_strategy` is not supported.
         """
-        _, num_query_tokens = query_token_ids.size()
+        if num_draft_tokens <= 0:
+            raise ValueError(f"num_draft_tokens should be positive, got {num_draft_tokens}.")
 
-        if num_query_tokens <= 0:
+        if num_query_tokens := query_token_ids.size(1) <= 0:
             raise ValueError(f"num_query_tokens should be positive, got {num_query_tokens}.")
 
-        if num_query_tokens > 1:
-            prefill_out = self.inferencer.prefill(
-                query_token_ids=query_token_ids,
-                kv_cache=kv_cache,
-                sample_strategy=sample_strategy,
-            )
-
-            decode_out = self.inferencer.decode(
-                query_token_ids=prefill_out.output_ids,
-                kv_cache=kv_cache,
-                max_new_tokens=num_draft_tokens - 1,
-                sample_strategy=sample_strategy,
-            )
-
-            draft_token_ids = torch.cat([prefill_out.output_ids, decode_out.output_ids], dim=-1)
-            draft_token_logits = torch.cat(
-                [prefill_out.output_logits[:, -1:, :], decode_out.output_logits], dim=-2
-            )
-
-        else:
+        # Decode only path
+        if num_query_tokens == 1:
             decode_out = self.inferencer.decode(
                 query_token_ids=query_token_ids,
                 kv_cache=kv_cache,
                 max_new_tokens=num_draft_tokens,
                 sample_strategy=sample_strategy,
             )
+            return DraftResult._make(decode_out)
 
-            draft_token_ids = decode_out.output_ids
-            draft_token_logits = decode_out.output_logits
+        # Prefill + optional decode path
+        # 1. Prefill
+        prefill_out = self.inferencer.prefill(
+            query_token_ids=query_token_ids,
+            kv_cache=kv_cache,
+            sample_strategy=sample_strategy,
+        )
+        draft_token_ids = prefill_out.token_ids[:, -1:]
+        draft_token_logits = prefill_out.token_logits[:, -1:, :]
+
+        # 2. Optional decode
+        if num_draft_tokens > 1:
+            decode_out = self.inferencer.decode(
+                query_token_ids=draft_token_ids,
+                kv_cache=kv_cache,
+                max_new_tokens=num_draft_tokens - 1,
+                sample_strategy=sample_strategy,
+            )
+            draft_token_ids = torch.cat([draft_token_ids, decode_out.token_ids], dim=1)
+            draft_token_logits = torch.cat([draft_token_logits, decode_out.token_logits], dim=1)
 
         return DraftResult(draft_token_ids, draft_token_logits)

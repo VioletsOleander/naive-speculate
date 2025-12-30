@@ -42,7 +42,7 @@ class Drafter(Protocol):
         - draft_token_ids: the generated draft token ids, of shape `[batch_size, num_drafted_tokens]`,
             where `num_drafted_tokens <= num_draft_tokens`, because the generation may stop early if
             the end-of-sequence token is generated.
-        - draft_token_logits: the logits corresponding the drafted token, of shape
+        - draft_token_logits: the logits corresponding to the drafted token, of shape
             `[batch_size, num_drafted_tokens, vocab_size]`.
 
         Args:
@@ -58,6 +58,7 @@ class Drafter(Protocol):
 
         Raises:
             ValueError: If `num_query_tokens` is not positive.
-            ValueError: If `self.sample_strategy` is not supported.
+            ValueError: If `num_draft_tokens` is not positive.
+            ValueError: If `sample_strategy` is not supported.
         """
         ...
