@@ -57,7 +57,7 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
         Refers to the interface `BaseInferencer._forward` for more details.
 
         Returns:
-            torch.Tensor: The forward pass output, containing logits output from the model of shape
+            ForwardOutput: The forward pass output, containing logits from the model of shape
                 `[batch_size, num_query_tokens, vocab_size]`, and empty tuples for the other two fields.
         """
         if not isinstance(kv_cache, DynamicNoUpdateCache):
