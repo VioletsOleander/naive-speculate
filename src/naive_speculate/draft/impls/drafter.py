@@ -29,7 +29,7 @@ class Drafter:
         - draft_token_ids: the generated draft token ids, of shape `[batch_size, num_drafted_tokens]`,
             where `num_drafted_tokens <= num_draft_tokens`, because the generation may stop early if
             the end-of-sequence token is generated.
-        - draft_token_logits: the logits corresponding the drafted token, of shape
+        - draft_token_logits: the logits corresponding to the drafted tokens, of shape
             `[batch_size, num_drafted_tokens, vocab_size]`.
 
         Args:
@@ -51,7 +51,7 @@ class Drafter:
         if num_draft_tokens <= 0:
             raise ValueError(f"num_draft_tokens should be positive, got {num_draft_tokens}.")
 
-        if num_query_tokens := query_token_ids.size(1) <= 0:
+        if (num_query_tokens := query_token_ids.size(1)) <= 0:
             raise ValueError(f"num_query_tokens should be positive, got {num_query_tokens}.")
 
         # Decode only path
@@ -62,7 +62,9 @@ class Drafter:
                 max_new_tokens=num_draft_tokens,
                 sample_strategy=sample_strategy,
             )
-            return DraftResult._make(decode_out)
+            return DraftResult(
+                draft_token_ids=decode_out.token_ids, draft_token_logits=decode_out.token_logits
+            )
 
         # Prefill + optional decode path
         # 1. Prefill
