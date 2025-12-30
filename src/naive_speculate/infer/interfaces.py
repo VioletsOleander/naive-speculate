@@ -36,7 +36,7 @@ class DecodeOutput(NamedTuple):
 
 
 class KVCache(Protocol):
-    """KVCache stores for layerwise key and value tensors, used by Inferencer during inference."""
+    """KVCache stores layerwise key and value tensors, which are used by Inferencer during inference."""
 
     def update(self, keys: Sequence[torch.Tensor], values: Sequence[torch.Tensor]) -> None:
         """Update the storage with new key and value tensors.
@@ -98,9 +98,6 @@ class Inferencer(Protocol):
         Returns:
             PrefillOutput: Contains generated new token ids of shape `[batch_size, 1]`
                 and token logits of shape `[batch_size, num_query_tokens, vocab_size]`.
-
-        Raises:
-            ValueError: If `sample_strategy` is unknown.
         """
         ...
 
@@ -125,8 +122,6 @@ class Inferencer(Protocol):
 
         Stop when `max_new_tokens` is reached or an EOS token is generated.
 
-        Expect `max_new_tokens > 0`, otherwise raise `ValueError`.
-
         Return `DecodeOutput`, which includes:
         - the newly generated token ids. Shape `[batch_size, num_generated_tokens]`.
         - the logits corresponding to the newly generated tokens.
@@ -135,16 +130,12 @@ class Inferencer(Protocol):
         Args:
             query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, 1]`
             kv_cache (KVCache): Contains the past key and value tensors for each transformer layer.
-            max_new_tokens (int): Limit on the number of new tokens to generate.
+            max_new_tokens (int): Limit on the number of new tokens to generate, should be positive (`> 0`).
             sample_strategy (SampleStrategy): Token sampling strategy during decoding.
 
         Returns:
             DecodeOutput: Contains generated new token ids of shape
                 `[batch_size, num_generated_tokens]` and token logits of shape
                 `[batch_size, num_generated_tokens, vocab_size]`.
-
-        Raises:
-            ValueError: If `max_new_tokens <= 0`.
-            ValueError: If `sample_strategy` is unknown.
         """
         ...
