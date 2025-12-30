@@ -36,7 +36,7 @@ class DecodeOutput(NamedTuple):
 
 
 class KVCache(Protocol):
-    """KVCache stores layerwise key and value tensors, which are used by Inferencer during inference."""
+    """Stores layerwise key and value tensors, which are used by an Inferencer during inference."""
 
     def update(self, keys: Sequence[torch.Tensor], values: Sequence[torch.Tensor]) -> None:
         """Update the storage with new key and value tensors.
