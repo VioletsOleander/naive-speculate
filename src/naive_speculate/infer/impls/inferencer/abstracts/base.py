@@ -16,13 +16,13 @@ if TYPE_CHECKING:
 
 
 class BaseInferencer(ABC, InferencerProtocol):
-    """BaseInferender implements `Inferencer` Protocol.
+    """`BaseInferencer` implements the `Inferencer` protocol.
 
-    BaseInferencer expects the inheriting class to implement the following abstract methods:
+    This class expects inheriting classes to implement the following abstract methods:
     - `_forward`: Forward with query token ids and return the computed logits.
     - `_eos_token_id`: Return the EOS token id.
 
-    BasedInferencer's implementation of `prefill` and `decode` methods rely on the above abstract methods.
+    `BaseInferencer`'s implementation of `prefill` and `decode` methods rely on the above abstract methods.
     """
 
     def __init__(self) -> None:
