@@ -135,8 +135,6 @@ class BaseInferencer(ABC):
         Return `DecodeOutput`, which includes the newly generated token ids
         and the logits corresponding to the newly generated tokens.
 
-        If `max_new_tokens <= 0`, return DecodeOutput with empty tensors for both fields.
-
         Args:
             query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, 1]`
             kv_cache (KVCache): Keys and values tensors corresponding to the past tokens.
@@ -150,12 +148,13 @@ class BaseInferencer(ABC):
                 If no new tokens are generated, both fields will be empty tensors.
 
         Raises:
+            ValueError: If `max_new_tokens` is non-positive.
             ValueError: If `sample_strategy` is unknown.
         """
-        output_collection = OutputCollection()
-
         if max_new_tokens <= 0:
-            return DecodeOutput._make(output_collection.finalize())
+            raise ValueError(f"max_new_tokens must be positive, got {max_new_tokens}")
+
+        output_collection = OutputCollection()
 
         stream = self._generation_stream(
             query_token_ids=query_token_ids, kv_cache=kv_cache, sample_strategy=sample_strategy
