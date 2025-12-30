@@ -1,7 +1,8 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import torch
 
+from naive_speculate.draft import Drafter as DrafterProtocol
 from naive_speculate.draft import DraftResult
 
 if TYPE_CHECKING:
@@ -9,13 +10,24 @@ if TYPE_CHECKING:
     from naive_speculate.utils.sample import SampleStrategy
 
 
-class Drafter:
+class Drafter(DrafterProtocol):
+    """Implements `Drafter` protocol.
+
+    Delegates token drafting to an `Inferencer` instance.
+
+    Refers to the protocol `Drafter` for more details.
+
+    Attributes:
+        inferencer (Inferencer): The inferencer used for drafting tokens.
+    """
+
     inferencer: Inferencer
 
     def __init__(self, inferencer: Inferencer) -> None:
         self.inferencer = inferencer
 
     @torch.no_grad()
+    @override
     def draft(
         self,
         query_token_ids: torch.Tensor,
@@ -23,31 +35,6 @@ class Drafter:
         num_draft_tokens: int,
         sample_strategy: SampleStrategy,
     ) -> DraftResult:
-        """Generate candidate tokens given query tokens and KV cache.
-
-        Return DraftResult, which includes:
-        - draft_token_ids: the generated draft token ids, of shape `[batch_size, num_drafted_tokens]`,
-            where `num_drafted_tokens <= num_draft_tokens`, because the generation may stop early if
-            the end-of-sequence token is generated.
-        - draft_token_logits: the logits corresponding to the drafted tokens, of shape
-            `[batch_size, num_drafted_tokens, vocab_size]`.
-
-        Args:
-            query_token_ids (torch.Tensor): Query tokens of shape `[batch_size, num_query_tokens]`.
-            kv_cache (KVCache): Key and value tensors of past tokens.
-            num_draft_tokens (int): Limit on the number of tokens to draft.
-            sample_strategy (SampleStrategy): The sampling strategy to use during generation.
-
-        Returns:
-            DraftResult: A named tuple containing:
-                - draft_token_ids (torch.Tensor): The generated draft token ids.
-                - draft_token_logits (torch.Tensor): The logits for the drafted tokens.
-
-        Raises:
-            ValueError: If `num_query_tokens` is not positive.
-            ValueError: If `num_draft_tokens` is not positive.
-            ValueError: If `sample_strategy` is not supported.
-        """
         if num_draft_tokens <= 0:
             raise ValueError(f"num_draft_tokens should be positive, got {num_draft_tokens}.")
 

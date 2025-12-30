@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, cast, override
 
 from transformers import Qwen3ForCausalLM
 
@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
 class QwenInferencer(ChunkwiseDecodeInferencer):
     """Inferencer for Qwen models with dynamic kv cache support.
+
+    Refers to base class `ChunkwiseDecodeInferencer` for more details.
 
     Attributes:
         qwen_model (Qwen3ForCausalLM): The Qwen model for causal language modeling.
@@ -34,7 +36,7 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
     @cached_property
     @override
     def _eos_token_id(self) -> int:
-        """End-of-sequence token id.
+        """Id of the end-of-sequence (EOS) token.
 
         Raises:
             ValueError: If the model config does not have an eos_token_id.
@@ -48,22 +50,15 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
     def _forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> ForwardOutput:
         """Forward the model with `query_token_ids`.
 
-        IMPORTANT: This method update the kv cache internally. Therefore,
+        This method updates the kv cache internally. Therefore,
         expect the `update` method of `kv_cache` to be no-op.
+        In other words, expect `kv_cache` to be of type `DynamicNoUpdateCache`.
 
-        Return the logits output from the model.
-
-        Args:
-            query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, num_query_tokens]`.
-            kv_cache (KVCache): Past key value tensors.
+        Refers to the interface `BaseInferencer._forward` for more details.
 
         Returns:
-            torch.Tensor: The forward pass output, containing logits output from the model of shape
+            ForwardOutput: The forward pass output, containing logits from the model of shape
                 `[batch_size, num_query_tokens, vocab_size]`, and empty tuples for the other two fields.
-
-        Raises:
-            TypeError: If the `kv_cache` is not of type `DynamicNoUpdateCache`.
-            ValueError: If the model forward output does not contain logits.
         """
         if not isinstance(kv_cache, DynamicNoUpdateCache):
             raise TypeError(
@@ -72,7 +67,7 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
 
         input_ids = query_token_ids
         forward_out = self.qwen_model.forward(
-            input_ids=input_ids,  # type: ignore[arg-type]
+            input_ids=cast("torch.LongTensor", input_ids),
             logits_to_keep=0,  # keeps all logits
             use_cache=True,
             past_key_values=kv_cache.cache,

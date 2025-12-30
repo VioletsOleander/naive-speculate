@@ -24,6 +24,9 @@ class DraftResult(NamedTuple):
 class Drafter(Protocol):
     """Drafter is able to generate draft tokens given query tokens and KV cache.
 
+    Drafter can either be itself an auto-regressive language model, or delegate
+    the generation to an underlying language model.
+
     In the context of speculative decoding, a drafter generates draft tokens
     that are later verified by a more accurate model (the verifier). Typically,
     the drafter is a smaller but faster model than the verifier.
@@ -38,6 +41,8 @@ class Drafter(Protocol):
     ) -> DraftResult:
         """Generate candidate tokens given query tokens and KV cache.
 
+        `kv_cache` will be updated internally as a side effect of this method.
+
         Return DraftResult, which includes:
         - draft_token_ids: the generated draft token ids, of shape `[batch_size, num_drafted_tokens]`,
             where `num_drafted_tokens <= num_draft_tokens`, because the generation may stop early if
@@ -45,20 +50,18 @@ class Drafter(Protocol):
         - draft_token_logits: the logits corresponding to the drafted token, of shape
             `[batch_size, num_drafted_tokens, vocab_size]`.
 
+        `num_query_tokens := query_token_ids.shape[1]` is expected to be positive.
+        `num_draft_tokens` is expected to be positive.
+
         Args:
             query_token_ids (torch.Tensor): Query tokens of shape `[batch_size, num_query_tokens]`.
             kv_cache (KVCache): Key and value tensors of past tokens.
-            num_draft_tokens (int): Limit on the number of tokens to draft.
+            num_draft_tokens (int): Limit on the number of tokens to draft, should be positive.
             sample_strategy (SampleStrategy): The sampling strategy to use during generation.
 
         Returns:
             DraftResult: A named tuple containing:
                 - draft_token_ids (torch.Tensor): The generated draft token ids.
                 - draft_token_logits (torch.Tensor): The logits for the drafted tokens.
-
-        Raises:
-            ValueError: If `num_query_tokens` is not positive.
-            ValueError: If `num_draft_tokens` is not positive.
-            ValueError: If `sample_strategy` is not supported.
         """
         ...

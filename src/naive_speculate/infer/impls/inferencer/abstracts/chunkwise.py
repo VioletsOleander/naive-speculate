@@ -13,15 +13,11 @@ if TYPE_CHECKING:
 
 
 class ChunkwiseDecodeInferencer(BaseInferencer):
-    """Abstract base class for chunkwise decode inferencers.
+    """ChunkwiseDecodeInferencer implements chunk-wise decoding to reduce device synchronization overhead.
 
-    ChunkwiseDecodeInferencers:
-    - implements `Inferencer` Protocol.
-    - decode new tokens in chunks to reduce device synchronization overhead.
+    ChunkwiseDecodeInferencer only checks eos token after each `decode_chunk_size` iterations.
 
-    ChunkwiseDecodeInferencers expect the inheriting class to implement the following abstract methods:
-    - `_forward`: Forward the model with query token ids and return the computed logits.
-    - `_eos_token_id`: Return the EOS token id according to the model configuration.
+    Refers to base class `BaseInferencer` for more details.
 
     Attributes:
         decode_chunk_size (int): EOS token check interval during decoding, default to 8.
@@ -46,27 +42,7 @@ class ChunkwiseDecodeInferencer(BaseInferencer):
 
         Check for EOS token after each `self.decode_chunk_size` generation iterations.
 
-        Stop when `max_new_tokens` is reached or an EOS token is generated.
-
-        Return `DecodeOutput`, which includes the newly generated token ids
-        and the logits corresponding to the newly generated tokens.
-
-        If `max_new_tokens <= 0`, return DecodeOutput with empty tensors for both fields.
-
-        Args:
-            query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, 1]`
-            kv_cache (KVCache): Key-Value cache corresponding to past tokens.
-            max_new_tokens (int): Limit on the number of new tokens to generate.
-            sample_strategy (SampleStrategy): Token sampling strategy during decoding.
-
-        Returns:
-            DecodeOutput: Contains generated new token ids of shape
-                `[batch_size, num_generated_tokens]` and token logits of shape
-                `[batch_size, num_generated_tokens, vocab_size]`.
-                If no new tokens are generated, both fields will be empty tensors.
-
-        Raises:
-            ValueError: If `sample_strategy` is unknown.
+        Refers to the interface `Inferencer.decode` for more details.
         """
         output_collection = OutputCollection()
 
