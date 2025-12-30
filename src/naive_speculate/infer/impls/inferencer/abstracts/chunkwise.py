@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class ChunkwiseDecodeInferencer(BaseInferencer):
     """ChunkwiseDecodeInferencer implements chunk-wise decoding to reduce device synchronization overhead.
 
-    ChunkwiseDecodeInferencer only check eos token after each `decode_chunk_size` iterations.
+    ChunkwiseDecodeInferencer only checks eos token after each `decode_chunk_size` iterations.
 
     Refers to base class `BaseInferencer` for more details.
 
