@@ -13,7 +13,7 @@ class DraftResult(NamedTuple):
     Attributes:
         token_ids: The token ids of the drafted tokens.
             Shape `[batch_size, num_drafted_tokens]`.
-        token_logits: The logits corresponding to the drafted tokens.
+        token_logits: The logits used to sample the drafted tokens.
             Shape `[batch_size, num_drafted_tokens, vocab_size]`.
     """
 
@@ -47,7 +47,7 @@ class Drafter(Protocol):
         - token_ids: the generated draft token ids, of shape `[batch_size, num_drafted_tokens]`,
             where `num_drafted_tokens <= num_draft_tokens`, because the generation may stop early if
             the end-of-sequence token is generated.
-        - token_logits: the logits corresponding to the drafted token, of shape
+        - token_logits: the logits used to sample the drafted token, of shape
             `[batch_size, num_drafted_tokens, vocab_size]`.
 
         `num_query_tokens := query_token_ids.shape[1]` is expected to be positive.

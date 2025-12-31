@@ -35,13 +35,13 @@ class SpeculativeDecoder:
         self,
         speculate_config: SpeculateConfig,
         drafter: Drafter,
-        verifier: Scorer,
+        scorer: Scorer,
         drafter_kvcache: KVCache,
         scorer_kvcache: KVCache,
     ) -> None:
         self.speculate_config = speculate_config
         self.drafter = drafter
-        self.verifier = verifier
+        self.scorer = scorer
         self.drafter_kvcache = drafter_kvcache
         self.scorer_kvcache = scorer_kvcache
 
@@ -88,7 +88,6 @@ class SpeculativeDecoder:
 
         Args:
             query_token_ids (torch.Tensor): Ids of the query tokens. Shape: `[batch_size, num_query_tokens]`.
-            max_new_tokens (int): Limit on the number of new tokens to generate. Should be positive.
             draft_strategy (SampleStrategy): Sampling strategy for drafter.
             verify_strategy (VerifyStrategy): Verification strategy for drafted tokens.
 
@@ -111,7 +110,7 @@ class SpeculativeDecoder:
         )
 
         num_drafted_tokens = draft_out.token_ids.size(1)
-        token_scores = score_out.token_logits[:, -num_drafted_tokens - 1 :, :]
+        token_scores = score_out.token_logits[:, -(num_drafted_tokens + 1) :, :]
 
         # 3. Verify (accept and optional resample)
         proposal_dists = torch.softmax(draft_out.token_logits, dim=-1)
@@ -120,13 +119,13 @@ class SpeculativeDecoder:
         match verify_strategy:
             case VerifyStrategy.SPECULATIVE_SAMPLE:
                 rejected_idx, resampled_token = speculative_sample(
-                    target_dists=target_dists,
+                    target_dists=target_dists.squeeze(0),
                     proposal_dists=proposal_dists,
                     candidate_tokens=draft_out.token_ids.squeeze(0),
                 )
             case VerifyStrategy.GREEDY_MATCH:
                 rejected_idx, resampled_token = greedy_match(
-                    target_dists=target_dists,
+                    target_dists=target_dists.squeeze(0),
                     candidate_tokens=draft_out.token_ids.squeeze(0),
                 )
 

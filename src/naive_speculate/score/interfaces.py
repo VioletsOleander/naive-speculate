@@ -42,12 +42,12 @@ class Scorer(Protocol):
 
         `kv_cache` will be updated internally as a side effect of this method.
 
-        Return the token logits corresponding to the query tokens (except for the first ones),
-        and the token logits corresponding to the next possible tokens.
+        Return the output includes logits for all query token positions,
+        where position `i` gives the logits for predicting token `i+1`.
 
         Args:
             query_token_ids (torch.Tensor): Query tokens to be scored. Shape `[batch_size, num_query_tokens]`.
-            kv_cache (torch.Tensor): Keys and values tensor for past context tokens.
+            kv_cache (KVCache): Keys and values tensor for past context tokens.
 
         Returns:
             ScoreResult: The scoring result containing token logits.

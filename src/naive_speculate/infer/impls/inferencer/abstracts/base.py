@@ -106,7 +106,7 @@ class BaseInferencer(InferencerProtocol):
             sample_strategy (SampleStrategy): Sampling strategy for new token generation.
 
         Yields:
-            tuple[torch.Tensor, ForwardOutput]: Sampled new token ids of shape `[batch_size, 1]`,
+            tuple[torch.Tensor, torch.Tensor]: Sampled new token ids of shape `[batch_size, 1]`,
                 and computed logits.
                 The compute logits are of shape `[batch_size, num_query_tokens, vocab_size]`
                 for the first call, and of shape `[batch_size, 1, vocab_size]` for subsequent calls.

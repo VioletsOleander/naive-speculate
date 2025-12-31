@@ -3,7 +3,7 @@ import torch
 
 def _indexing_or_mask(tensor: torch.Tensor, idx: torch.Tensor) -> torch.Tensor:
     """Index `tensor` at positions `idx`, return zero if `idx` is out of bounds."""
-    clamped_idx = torch.clamp(idx, max=tensor.size(0))
+    clamped_idx = torch.clamp(idx, max=tensor.size(0) - 1)
     indexed_tensor = tensor[clamped_idx]
 
     return indexed_tensor * (idx < tensor.size(0))
@@ -32,11 +32,10 @@ def speculative_sample(
 
     Returns:
         rejected_idx (torch.Tensor): Index of the first rejected token. Scalar tensor with empty shape.
-            Range: `[0, num_draft_tokens]`.  If no rejection happens,
-            equal to `num_draft_tokens`.
-        resampled_token (torch.Tensor): Resampled token at the rejected position. Scalar tensor with empty shape.
-            If no rejection happens, this will be the token sampled from the extra distribution
-            at the end of `target_dists`.
+            Range: `[0, num_draft_tokens]`.  If no rejection happens, equal to `num_draft_tokens`.
+        resampled_token (torch.Tensor): Resampled token at the rejected position.
+            Scalar tensor with empty shape.  If no rejection happens,
+            this will be the token sampled from the extra distribution at the end of `target_dists`.
     """
     num_draft_tokens = candidate_tokens.size(0)
 
@@ -90,7 +89,7 @@ def greedy_match(
     greedy_tokens = torch.argmax(target_dists, dim=-1)
 
     # 2. Find the first mismatch position
-    matches = greedy_tokens == candidate_tokens
+    matches = greedy_tokens[:-1] == candidate_tokens
     val, rejected_idx = torch.min(matches, dim=-1)
     rejected_idx += val * num_draft_tokens  # if all accepted, rejected_idx == draft_tokens_num
 

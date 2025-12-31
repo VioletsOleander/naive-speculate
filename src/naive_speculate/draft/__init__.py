@@ -2,7 +2,7 @@
 
 Exports:
     Drafter: Interface for drafting components.
-    DraftResult: Data structure representing the result
+    DraftResult: Data structure representing the result of the drafting process.
 """
 
 from .interfaces import Drafter, DraftResult

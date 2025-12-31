@@ -13,8 +13,8 @@ class PrefillOutput(NamedTuple):
 
     Attributes:
         token_ids (torch.Tensor): The newly generated token ids after prefill. Shape `[batch_size, 1]`.
-        token_logits (torch.Tensor): The logits of the query tokens (excluding the first ones)
-            and the newly generated tokens. Shape `[batch_size, num_query_tokens, vocab_size]`.
+        token_logits (torch.Tensor): The logits at the quety token poisitions.
+            Shape `[batch_size, num_query_tokens, vocab_size]`.
     """
 
     token_ids: torch.Tensor
@@ -27,7 +27,7 @@ class DecodeOutput(NamedTuple):
     Attributes:
         token_ids (torch.Tensor): The newly generated token ids after decode.
             Shape `[batch_size, num_generated_tokens]`.
-        token_logits (torch.Tensor): The logits of newly generated tokens.
+        token_logits (torch.Tensor): The logits used to sample the newly generated tokens.
             Shape `[batch_size, num_generated_tokens, vocab_size]`.
     """
 
@@ -83,10 +83,9 @@ class Inferencer(Protocol):
         (Currently, I think it simplifies the implementation, but also makes this invocation
         not purely functional, further consideration may be needed in the future.)
 
-        Return the logits corresponding to the query tokens (except for the first tokens,
-        since the first tokens do not have preceding context), and the logits
-        corresponding to the possible new tokens.
-        Together, the shape of output logits is `[batch_size, num_query_tokens, vocab_size]`.
+        Return the logits at every querty token positions, where position `i` gives the logits
+        for sampling the token at position `i+1`.
+        The shape of output logits is `[batch_size, num_query_tokens, vocab_size]`.
 
         Args:
             query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, num_query_tokens]`.
@@ -110,8 +109,7 @@ class Inferencer(Protocol):
 
         Return `PrefillOutput`, which includes:
         - the generated new token ids. Shape `[batch_size, 1]`.
-        - the token logits corresponding to the query tokens
-            (except for the first tokens) and the newly generated tokens.
+        - the token logits at the query token positions.
             Shape `[batch_size, num_query_tokens, vocab_size]`.
 
         Args:
@@ -147,7 +145,7 @@ class Inferencer(Protocol):
 
         Return `DecodeOutput`, which includes:
         - the newly generated token ids. Shape `[batch_size, num_generated_tokens]`.
-        - the logits corresponding to the newly generated tokens.
+        - the logits used to sample the newly generated tokens.
             Shape `[batch_size, num_generated_tokens, vocab_size]`.
 
         Args:
