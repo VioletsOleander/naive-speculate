@@ -11,14 +11,14 @@ class DraftResult(NamedTuple):
     """Output of `Drafter.draft` method.
 
     Attributes:
-        draft_token_ids: The token ids of the drafted tokens.
+        token_ids: The token ids of the drafted tokens.
             Shape `[batch_size, num_drafted_tokens]`.
-        draft_token_logits: The logits corresponding to the drafted tokens.
+        token_logits: The logits corresponding to the drafted tokens.
             Shape `[batch_size, num_drafted_tokens, vocab_size]`.
     """
 
-    draft_token_ids: torch.Tensor
-    draft_token_logits: torch.Tensor
+    token_ids: torch.Tensor
+    token_logits: torch.Tensor
 
 
 class Drafter(Protocol):
@@ -44,10 +44,10 @@ class Drafter(Protocol):
         `kv_cache` will be updated internally as a side effect of this method.
 
         Return DraftResult, which includes:
-        - draft_token_ids: the generated draft token ids, of shape `[batch_size, num_drafted_tokens]`,
+        - token_ids: the generated draft token ids, of shape `[batch_size, num_drafted_tokens]`,
             where `num_drafted_tokens <= num_draft_tokens`, because the generation may stop early if
             the end-of-sequence token is generated.
-        - draft_token_logits: the logits corresponding to the drafted token, of shape
+        - token_logits: the logits corresponding to the drafted token, of shape
             `[batch_size, num_drafted_tokens, vocab_size]`.
 
         `num_query_tokens := query_token_ids.shape[1]` is expected to be positive.
@@ -61,7 +61,7 @@ class Drafter(Protocol):
 
         Returns:
             DraftResult: A named tuple containing:
-                - draft_token_ids (torch.Tensor): The generated draft token ids.
-                - draft_token_logits (torch.Tensor): The logits for the drafted tokens.
+                - token_ids (torch.Tensor): The generated draft token ids.
+                - token_logits (torch.Tensor): The logits for the drafted tokens.
         """
         ...

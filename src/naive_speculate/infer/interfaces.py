@@ -72,17 +72,41 @@ class Inferencer(Protocol):
     Inferencer will update the KVCache internally when processing the query tokens.
     """
 
-    def prefill(
-        self, query_token_ids: torch.Tensor, kv_cache: KVCache, sample_strategy: SampleStrategy
-    ) -> PrefillOutput:
-        """Process the `query_token_ids` in parallel and generate the next new tokens.
+    def forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor:
+        """Forward the `query_token_ids` with given `kv_cache`.
 
-        `kv_cache` is used for avoiding redundant computations for the key and value tensors.
+        Expect `kv_cache` to contain the key and value tensors for all tokens preceding
+        the query tokens.
 
         `kv_cache` will be updated internally with the newly computed key and value tensors,
         i.e. the key and value tensors corresponding to the query tokens.
         (Currently, I think it simplifies the implementation, but also makes this invocation
         not purely functional, further consideration may be needed in the future.)
+
+        Return the logits corresponding to the query tokens (except for the first tokens,
+        since the first tokens do not have preceding context), and the logits
+        corresponding to the possible new tokens.
+        Together, the shape of output logits is `[batch_size, num_query_tokens, vocab_size]`.
+
+        Args:
+            query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, num_query_tokens]`.
+            kv_cache (KVCache): Contains the key value tensors of past tokens.
+
+        Returns:
+            torch.Tensor: Logits of shape `[batch_size, num_query_tokens, vocab_size]`.
+        """
+        ...
+
+    def prefill(
+        self, query_token_ids: torch.Tensor, kv_cache: KVCache, sample_strategy: SampleStrategy
+    ) -> PrefillOutput:
+        """Process the `query_token_ids` in parallel and generate the next new tokens.
+
+        Expect `kv_cache` to contain the key and value tensors for all tokens preceding
+        the query tokens.
+
+        `kv_cache` will be updated internally with the newly computed key and value tensors,
+        i.e. the key and value tensors corresponding to the query tokens.
 
         Return `PrefillOutput`, which includes:
         - the generated new token ids. Shape `[batch_size, 1]`.
@@ -110,12 +134,11 @@ class Inferencer(Protocol):
     ) -> DecodeOutput:
         """Process `query_token_ids` and auto-regressively generate next new tokens.
 
-        `kv_cache` is used for avoiding redundant computations for the key and value tensors.
+        Expect `kv_cache` to contain the key and value tensors for all tokens preceding
+        the query tokens.
 
         `kv_cache` will be updated internally with the newly computed key and value tensors,
         i.e. the key and value tensors corresponding to the query tokens.
-        (Currently, I think it simplifies the implementation, but also makes this invocation
-        not purely functional, further consideration may be needed in the future.)
 
         Expect `query_token_ids` to contain only the new query tokens
         since the last call to `prefill` or `decode`, i.e., of shape `[batch_size, 1]`.
