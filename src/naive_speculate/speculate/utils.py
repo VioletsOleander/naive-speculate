@@ -3,8 +3,8 @@ import torch
 
 def _indexing_or_mask(tensor: torch.Tensor, idx: torch.Tensor) -> torch.Tensor:
     """Index `tensor` at positions `idx`, return zero if `idx` is out of bounds."""
-    clampped_idx = torch.clamp(idx, max=tensor.size(0))
-    indexed_tensor = tensor[clampped_idx]
+    clamped_idx = torch.clamp(idx, max=tensor.size(0))
+    indexed_tensor = tensor[clamped_idx]
 
     return indexed_tensor * (idx < tensor.size(0))
 
