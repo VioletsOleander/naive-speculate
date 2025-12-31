@@ -1,12 +1,13 @@
 repos:
   - repo: local
     hooks:
-      - id: Cspell-lint
+      - id: cspell-lint
         name: Cspell Lint
-        entry: bunx cspell lint
+        entry: cspell lint
+        language: node
+        additional_dependencies: ["cspell"]
         stages: [manual]
-        language: unsupported
-        types: [python]
+        types: [python, markdown]
       - id: ruff-format-check
         name: Ruff Format Check
         entry: uv run ruff format --check
