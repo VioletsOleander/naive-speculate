@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import TYPE_CHECKING, override
 
 import torch
@@ -12,17 +12,17 @@ from .utils.collection import OutputCollection
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from .forward_out import ForwardOutput
 
+class BaseInferencer(InferencerProtocol):
+    """Implements `prefill` and `decode` method of `Inferencer` protocol.
 
-class BaseInferencer(ABC, InferencerProtocol):
-    """`BaseInferencer` implements the `Inferencer` protocol.
+    BaseInferencer utilize `forward` method to provide simple implementations
+    for `prefill` and `decode` methods, and leave the concrete implementation
+    of `forward` to inheriting concrete classes.
 
-    This class expects inheriting classes to implement the following abstract methods:
-    - `_forward`: Forward with query token ids and return the computed logits.
+    BaseInferencer expects inheriting classes to implement the following abstract methods:
+    - `forward`: Forward with query token ids and return the computed logits.
     - `_eos_token_id`: Return the EOS token id.
-
-    `BaseInferencer`'s implementation of `prefill` and `decode` methods rely on the above abstract methods.
     """
 
     def __init__(self) -> None:
@@ -35,56 +35,7 @@ class BaseInferencer(ABC, InferencerProtocol):
         ...
 
     @abstractmethod
-    def _forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> ForwardOutput:
-        """Forward with `query_token_ids` given `kv_cache` and return the computed logits.
-
-        Args:
-            query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, num_query_tokens]`.
-            kv_cache (KVCache): Keys and values tensors corresponding to the past tokens.
-
-        Returns:
-            ForwardOutput: Contains computed logits of shape `[batch_size, num_query_tokens, vocab_size]`,
-                and keys and values tensors corresponding to the query tokens.
-        """
-        ...
-
-    def _generation_stream(
-        self,
-        query_token_ids: torch.Tensor,
-        kv_cache: KVCache,
-        sample_strategy: SampleStrategy,
-    ) -> Generator[tuple[torch.Tensor, torch.Tensor]]:
-        """Generate new tokens auto-regressively as a stream.
-
-        Each iteration performs:
-        1. Forward the model with `query_token_ids` to get logits.
-        2. Sample the next token ids from the logits according to `sample_strategy`.
-        3. Update `query_token_ids` with the newly sampled token ids.
-
-        Args:
-            query_token_ids (torch.Tensor): Initial query token ids of shape `[batch_size, num_query_tokens]`.
-            kv_cache (KVCache): Keys and values tensors corresponding to the past tokens.
-            sample_strategy (SampleStrategy): Sampling strategy for new token generation.
-
-        Yields:
-            tuple[torch.Tensor, ForwardOutput]: Sampled new token ids of shape `[batch_size, 1]`,
-                and computed logits.
-                The compute logits are of shape `[batch_size, num_query_tokens, vocab_size]`
-                for the first call, and of shape `[batch_size, 1, vocab_size]` for subsequent calls.
-        """
-        while True:
-            # 1. Forward
-            forward_out = self._forward(query_token_ids, kv_cache)
-
-            # 2. Sample
-            next_token_logits = forward_out.logits[:, -1].to(dtype=torch.float32, copy=True)
-            next_token_ids = sample_tokens(next_token_logits, sample_strategy)
-
-            # 3. Update
-            query_token_ids = next_token_ids
-            kv_cache.update(forward_out.keys, forward_out.values)
-
-            yield next_token_ids, forward_out.logits
+    def forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor: ...
 
     @torch.no_grad()
     @override
@@ -135,3 +86,40 @@ class BaseInferencer(ABC, InferencerProtocol):
                 break
 
         return DecodeOutput._make(output_collection.finalize())
+
+    def _generation_stream(
+        self,
+        query_token_ids: torch.Tensor,
+        kv_cache: KVCache,
+        sample_strategy: SampleStrategy,
+    ) -> Generator[tuple[torch.Tensor, torch.Tensor]]:
+        """Generate new tokens auto-regressively as a stream.
+
+        Each iteration performs:
+        1. Forward the model with `query_token_ids` to get logits.
+        2. Sample the next token ids from the logits according to `sample_strategy`.
+        3. Update `query_token_ids` with the newly sampled token ids.
+
+        Args:
+            query_token_ids (torch.Tensor): Initial query token ids of shape `[batch_size, num_query_tokens]`.
+            kv_cache (KVCache): Keys and values tensors corresponding to the past tokens.
+            sample_strategy (SampleStrategy): Sampling strategy for new token generation.
+
+        Yields:
+            tuple[torch.Tensor, torch.Tensor]: Sampled new token ids of shape `[batch_size, 1]`,
+                and computed logits.
+                The computed logits are of shape `[batch_size, num_query_tokens, vocab_size]`
+                for the first call, and of shape `[batch_size, 1, vocab_size]` for subsequent calls.
+        """
+        while True:
+            # 1. Forward
+            token_logits = self.forward(query_token_ids, kv_cache)
+
+            # 2. Sample
+            next_token_logits = token_logits[:, -1].to(dtype=torch.float32, copy=True)
+            next_token_ids = sample_tokens(next_token_logits, sample_strategy)
+
+            # 3. Update
+            query_token_ids = next_token_ids
+
+            yield next_token_ids, token_logits

@@ -49,9 +49,7 @@ class Drafter(DrafterProtocol):
                 max_new_tokens=num_draft_tokens,
                 sample_strategy=sample_strategy,
             )
-            return DraftResult(
-                draft_token_ids=decode_out.token_ids, draft_token_logits=decode_out.token_logits
-            )
+            return DraftResult(token_ids=decode_out.token_ids, token_logits=decode_out.token_logits)
 
         # Prefill + optional decode path
         # 1. Prefill

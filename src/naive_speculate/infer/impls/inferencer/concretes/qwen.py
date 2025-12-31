@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, cast, override
 
 from transformers import Qwen3ForCausalLM
 
-from naive_speculate.infer.impls.inferencer.abstracts import ForwardOutput
 from naive_speculate.infer.impls.inferencer.abstracts.chunkwise import ChunkwiseDecodeInferencer
 from naive_speculate.infer.impls.kvcache.dynamic_cache import DynamicNoUpdateCache
 
@@ -47,18 +46,17 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
         return eos_token_id
 
     @override
-    def _forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> ForwardOutput:
+    def forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor:
         """Forward the model with `query_token_ids`.
 
         This method updates the kv cache internally. Therefore,
         expect the `update` method of `kv_cache` to be no-op.
         In other words, expect `kv_cache` to be of type `DynamicNoUpdateCache`.
 
-        Refers to the interface `BaseInferencer._forward` for more details.
+        Refers to the interface `Inferencer.forward` for more details.
 
-        Returns:
-            ForwardOutput: The forward pass output, containing logits from the model of shape
-                `[batch_size, num_query_tokens, vocab_size]`, and empty tuples for the other two fields.
+        Raises:
+            ValueError: If the model forward output does not contain logits.
         """
         if not isinstance(kv_cache, DynamicNoUpdateCache):
             raise TypeError(
@@ -76,4 +74,4 @@ class QwenInferencer(ChunkwiseDecodeInferencer):
         if forward_out.logits is None:
             raise ValueError("Model forward output does not contain logits.")
 
-        return ForwardOutput._make((forward_out.logits, (), ()))
+        return forward_out.logits
