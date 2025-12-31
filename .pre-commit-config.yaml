@@ -6,7 +6,6 @@ repos:
         entry: cspell lint
         language: node
         additional_dependencies: ["cspell"]
-        stages: [manual]
         types: [python, markdown]
       - id: ruff-format-check
         name: Ruff Format Check
