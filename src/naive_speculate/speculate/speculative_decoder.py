@@ -120,7 +120,7 @@ class SpeculativeDecoder:
             case VerifyStrategy.SPECULATIVE_SAMPLE:
                 rejected_idx, resampled_token = speculative_sample(
                     target_dists=target_dists.squeeze(0),
-                    proposal_dists=proposal_dists,
+                    proposal_dists=proposal_dists.squeeze(0),
                     candidate_tokens=draft_out.token_ids.squeeze(0),
                 )
             case VerifyStrategy.GREEDY_MATCH:

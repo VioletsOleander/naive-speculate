@@ -9,11 +9,12 @@ if TYPE_CHECKING:
 class ScoreResult(NamedTuple):
     """Output of `Scorer.score` method.
 
-    Contains the token logits for the given query tokens (except for the first ones),
-    and the token logits for the next possible tokens.
+    Contains the logits at each position of the query tokens. The logits at position `i`
+    are used to predict the token at position `i+1`.
 
     Attributes:
-        token_logits (torch.Tensor): Logits for the query tokens. Shape `[batch_size, num_query_tokens, vocab_size]`.
+        token_logits (torch.Tensor):  Logits at the query token positions.
+            Shape `[batch_size, num_query_tokens, vocab_size]`.
     """
 
     token_logits: torch.Tensor

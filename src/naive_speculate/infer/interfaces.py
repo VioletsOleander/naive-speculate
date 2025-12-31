@@ -13,7 +13,7 @@ class PrefillOutput(NamedTuple):
 
     Attributes:
         token_ids (torch.Tensor): The newly generated token ids after prefill. Shape `[batch_size, 1]`.
-        token_logits (torch.Tensor): The logits at the quety token poisitions.
+        token_logits (torch.Tensor): The logits at the query token positions.
             Shape `[batch_size, num_query_tokens, vocab_size]`.
     """
 
@@ -83,7 +83,7 @@ class Inferencer(Protocol):
         (Currently, I think it simplifies the implementation, but also makes this invocation
         not purely functional, further consideration may be needed in the future.)
 
-        Return the logits at every querty token positions, where position `i` gives the logits
+        Return the logits at every query token positions, where position `i` gives the logits
         for sampling the token at position `i+1`.
         The shape of output logits is `[batch_size, num_query_tokens, vocab_size]`.
 
