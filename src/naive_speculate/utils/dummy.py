@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 from transformers import TextStreamer
 
@@ -15,7 +14,7 @@ class DummyStreamer(TextStreamer):
     def __init__(self) -> None:
         pass
 
-    def put(self, value: Any) -> None:
+    def put(self, value: object) -> None:
         pass
 
     def end(self) -> None:

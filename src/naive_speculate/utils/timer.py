@@ -1,4 +1,8 @@
 from time import perf_counter
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from types import TracebackType
 
 
 class Timer:
@@ -14,7 +18,12 @@ class Timer:
         self.start = perf_counter()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+    def __exit__(
+        self,
+        _exc_type: type[BaseException] | None,
+        _exc_val: BaseException | None,
+        _exc_tb: TracebackType | None,
+    ) -> bool:
         self.end = perf_counter()
         self.elapsed = self.end - self.start
         return False
