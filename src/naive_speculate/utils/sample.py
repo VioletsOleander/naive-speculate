@@ -26,9 +26,6 @@ def sample_tokens(token_logits: torch.Tensor, sampling_strategy: SampleStrategy)
 
     Returns:
         torch.Tensor: Sampled next token ids of shape `[batch_size, 1]`.
-
-    Raises:
-        ValueError: If `sampling_strategy` is unknown.
     """
     match sampling_strategy:
         case SampleStrategy.GREEDY:

@@ -1,13 +1,12 @@
-from typing import Literal, overload
+from typing import TYPE_CHECKING, Literal, cast, overload
 
-from torch import Tensor
-from transformers import AutoTokenizer, BatchEncoding, PreTrainedTokenizerFast
-
-from .config import SpeculateConfig
+if TYPE_CHECKING:
+    from torch import Tensor
+    from transformers import BatchEncoding, PreTrainedTokenizerFast
 
 
 class Tokenizer:
-    """Wrapper class for tokenizer of drafter and verifier.
+    """Wraps the tokenizer of drafter and verifier.
 
     It is assumed that drafter and verifier share the same tokenizer.
 
@@ -17,36 +16,35 @@ class Tokenizer:
 
     tokenizer: PreTrainedTokenizerFast
 
-    def __init__(self, config: SpeculateConfig) -> None:
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            config.drafter_model_name, local_files_only=True
-        )
-        assert isinstance(self.tokenizer, PreTrainedTokenizerFast)
+    def __init__(self, tokenizer: PreTrainedTokenizerFast) -> None:
+        self.tokenizer = tokenizer
         self.tokenizer.padding_side = "left"
 
     @overload
     def tokenize(
-        self, input_texts: list[str], return_tensors: Literal[True] = True
+        self, input_texts: list[str], *, return_tensors: Literal[True] = True
     ) -> tuple[Tensor, Tensor]: ...
 
     @overload
     def tokenize(
-        self, input_texts: list[str], return_tensors: Literal[False]
+        self, input_texts: list[str], *, return_tensors: Literal[False]
     ) -> BatchEncoding: ...
 
     @overload
     def tokenize(
         self,
         input_texts: list[str],
+        *,
         return_tensors: bool,
     ) -> BatchEncoding | tuple[Tensor, Tensor]: ...
 
     def tokenize(
-        self, input_texts: list[str], return_tensors: bool = True
+        self, input_texts: list[str], *, return_tensors: bool = True
     ) -> BatchEncoding | tuple[Tensor, Tensor]:
-        """Tokenize a batch of input sequences into token ID sequences.
+        """Tokenize a batch of input sequences into token id sequences.
 
-        Returns either a BatchEncoding object or a tuple of tensors (input_ids and attention_mask) based on `return_tensors` flag.
+        Returns either a BatchEncoding object or a tuple of tensors (input_ids and attention_mask)
+        based on `return_tensors` flag.
 
         Args:
             input_texts (list[str]): List of input strings to tokenize.
@@ -63,35 +61,29 @@ class Tokenizer:
         input_ids = tokenized["input_ids"]
         attention_mask = tokenized["attention_mask"]
 
-        assert isinstance(input_ids, Tensor)
-        assert isinstance(attention_mask, Tensor)
-        return input_ids, attention_mask
+        return cast("Tensor", input_ids), cast("Tensor", attention_mask)
 
-    def detokenize(
-        self, token_ids: Tensor, skip_special_tokens: bool = False
-    ) -> list[str]:
+    def detokenize(self, token_ids: Tensor, *, skip_special_tokens: bool = False) -> list[str]:
         """Detokenize a batch of token ID sequences back into strings.
 
         Args:
-            token_ids (Tensor): Batch of token ID sequences. Shape: `[batch_size, seq_len]`.
+            token_ids (Tensor): Batch of token id sequences. Shape: `[batch_size, seq_len]`.
             skip_special_tokens (bool): If True, special tokens will be removed from the output strings.
 
         Returns:
             list[str]: Detokenized strings. Length: `[batch_size]`.
         """
-        return self.tokenizer.batch_decode(
-            token_ids, skip_special_tokens=skip_special_tokens
-        )
+        return self.tokenizer.batch_decode(token_ids, skip_special_tokens=skip_special_tokens)
 
     def apply_chat_template(
-        self, messages: list[dict[str, str]], enable_thinking: bool = True
+        self, messages: list[dict[str, str]], *, enable_thinking: bool = True
     ) -> str:
         """Construct prompt text from chat messages using the tokenizer's chat template.
 
         Args:
             messages (list[dict[str, str]]): List of chat messages, where each message is a dict
                 with keys "role" and "content".
-            enable_thinking (bool): If True, append \<think\> and \</think\> to the generation prompt.
+            enable_thinking (bool): If True, append <think> and </think> to the generation prompt.
 
         Returns:
             str: Constructed prompt text.
@@ -102,6 +94,5 @@ class Tokenizer:
             add_generation_prompt=True,
             enable_thinking=enable_thinking,
         )
-        assert isinstance(text, str)
 
-        return text
+        return cast("str", text)
