@@ -9,5 +9,10 @@
     }
   ],
   "dictionaries": ["project-words"],
-  "ignorePaths": ["/project-words.txt"]
+  "ignorePaths": [
+    "project-words.txt",
+    "uv.lock",
+    "pyproject.toml",
+    ".gitignore"
+  ]
 }

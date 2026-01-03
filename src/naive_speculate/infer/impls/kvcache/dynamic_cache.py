@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from transformers import DynamicCache, PretrainedConfig
+from transformers import DynamicCache
+
+from naive_speculate.infer import KVCache
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -8,7 +10,7 @@ if TYPE_CHECKING:
     import torch
 
 
-class DynamicNoUpdateCache:
+class DynamicNoUpdateCache(KVCache):
     """DynamicNoUpdateCache wraps huggingface's DynamicCache, do nothing on update.
 
     DynamicNoUpdateCache implements KVCache protocol.
@@ -22,11 +24,13 @@ class DynamicNoUpdateCache:
 
     cache: DynamicCache
 
-    def __init__(self, model_config: PretrainedConfig) -> None:
-        self.cache = DynamicCache(config=model_config)
+    def __init__(self) -> None:
+        self.cache = DynamicCache()
 
-    def update(self, _keys: Sequence[torch.Tensor], _values: Sequence[torch.Tensor]) -> None:
-        pass
+    @override
+    def update(self, keys: Sequence[torch.Tensor], values: Sequence[torch.Tensor]) -> None: ...
 
+    @override
     def crop(self, num_tokens_crop: int) -> None:
-        raise NotImplementedError("TODO")
+        length = self.cache.get_seq_length(0)
+        self.cache.crop(length - num_tokens_crop)

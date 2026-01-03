@@ -27,9 +27,13 @@ class VerifyStrategy(StrEnum):
 
 
 class SpeculativeDecoder:
-    drafter: Drafter
-    scorer: Scorer
-    speculate_config: SpeculateConfig
+    """Performs speculative decoding using a drafter and a scorer."""
+
+    _speculate_config: SpeculateConfig
+    _drafter: Drafter
+    _scorer: Scorer
+    _drafter_kvcache: KVCache
+    _scorer_kvcache: KVCache
 
     def __init__(
         self,
@@ -39,19 +43,19 @@ class SpeculativeDecoder:
         drafter_kvcache: KVCache,
         scorer_kvcache: KVCache,
     ) -> None:
-        self.speculate_config = speculate_config
-        self.drafter = drafter
-        self.scorer = scorer
-        self.drafter_kvcache = drafter_kvcache
-        self.scorer_kvcache = scorer_kvcache
+        self._speculate_config = speculate_config
+        self._drafter = drafter
+        self._scorer = scorer
+        self._drafter_kvcache = drafter_kvcache
+        self._scorer_kvcache = scorer_kvcache
 
     @cached_property
     def num_draft_tokens(self) -> int:
-        return self.speculate_config.num_draft_tokens
+        return self._speculate_config.num_draft_tokens
 
     @cached_property
     def sample_strategy(self) -> SampleStrategy:
-        return self.speculate_config.sample_strategy
+        return self._speculate_config.sample_strategy
 
     def speculative_decode(
         self,
@@ -95,18 +99,18 @@ class SpeculativeDecoder:
             torch.Tensor: Generated token ids. Shape: `[batch_size, num_generated_tokens]`.
         """
         # 1. Draft
-        draft_out = self.drafter.draft(
+        draft_out = self._drafter.draft(
             query_token_ids=query_token_ids,
-            kv_cache=self.drafter_kvcache,
+            kv_cache=self._drafter_kvcache,
             num_draft_tokens=self.num_draft_tokens,
             sample_strategy=draft_strategy,
         )
 
         # 2. Score
         context_token_ids = torch.cat([query_token_ids, draft_out.token_ids], dim=1)
-        score_out = self.scorer.score(
+        score_out = self._scorer.score(
             query_token_ids=context_token_ids,
-            kv_cache=self.scorer_kvcache,
+            kv_cache=self._scorer_kvcache,
         )
 
         num_drafted_tokens = draft_out.token_ids.size(1)
@@ -132,8 +136,8 @@ class SpeculativeDecoder:
         # 4. Crop
         num_tokens_accept = int(rejected_idx.item())
         num_tokens_crop = num_drafted_tokens - num_tokens_accept
-        self.drafter_kvcache.crop(num_tokens_crop)
-        self.scorer_kvcache.crop(num_tokens_crop)
+        self._drafter_kvcache.crop(num_tokens_crop)
+        self._scorer_kvcache.crop(num_tokens_crop)
 
         # 5. Output
         accepted_tokens = draft_out.token_ids[:, :num_tokens_accept]
