@@ -28,7 +28,6 @@ class Qwen3Model:
             model_name,
             device_map="auto",
             torch_dtype="auto",
-            local_files_only=True,
         )
 
     def eos_token_id(self) -> int:
@@ -81,7 +80,7 @@ class Qwen3BasicInferencer(BasicInferencer):
     Delegates the implementation of `forward` and `_eos_token_id` to the
     underlying `Qwen3Model`.
 
-    Refers to base class `BaseInferencer` for more details.
+    Refers to base class `BasicInferencer` for more details.
 
     Attributes:
         qwen3_model (Qwen3Model): The underlying Qwen3 model.

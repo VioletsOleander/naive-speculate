@@ -28,7 +28,8 @@ class DynamicNoUpdateCache(KVCache):
         self.cache = DynamicCache()
 
     @override
-    def update(self, keys: Sequence[torch.Tensor], values: Sequence[torch.Tensor]) -> None: ...
+    def update(self, keys: Sequence[torch.Tensor], values: Sequence[torch.Tensor]) -> None:
+        """Intentionally a no-op, the underlying model will update `self.cache` in-place."""
 
     @override
     def crop(self, num_tokens_crop: int) -> None:

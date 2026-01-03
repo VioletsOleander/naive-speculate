@@ -21,7 +21,7 @@ class SupportedModelFamilies(StrEnum):
 
 
 class SupportedInferencerTypes(StrEnum):
-    BASIC = "Basis"
+    BASIC = "Basic"
     CHUNKWISE = "Chunkwise"
 
 
@@ -62,7 +62,7 @@ class DependencyContainer:
     @cached_property
     def context(self) -> list[dict[str, str]]:
         """Input context loaded from the specified context file."""
-        with Path(self.config_path).open("r", encoding="utf-8") as f:
+        with Path(self.context_path).open("r", encoding="utf-8") as f:
             context: list[dict[str, str]] = json.load(f)
 
         return context
