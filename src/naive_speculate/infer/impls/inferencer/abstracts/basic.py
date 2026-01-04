@@ -5,12 +5,14 @@ import torch
 
 from naive_speculate.infer import DecodeOutput, KVCache, PrefillOutput
 from naive_speculate.infer import Inferencer as InferencerProtocol
-from naive_speculate.utils.sample import SampleStrategy, sample_tokens
+from naive_speculate.utils.sample import sample_tokens
 
 from .utils.collection import OutputCollection
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+
+    from naive_speculate.utils.config import SampleStrategy
 
 
 class BasicInferencer(InferencerProtocol):

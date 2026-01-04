@@ -1,8 +1,33 @@
 import tomllib
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 
-from .sample import SampleStrategy
+
+class SampleStrategy(StrEnum):
+    """Sampling strategies for token generation.
+
+    Attributes:
+        RANDOM = "random": Sample tokens probabilistically according to
+            the softmax distribution over `token_logits`.
+        GREEDY = "greedy": Always select the token with
+            the highest probability (argmax) from `token_logits`.
+    """
+
+    RANDOM = "random"
+    GREEDY = "greedy"
+
+
+class VerifyStrategy(StrEnum):
+    """Verification strategies for speculative decoding.
+
+    Attributes:
+        GREEDY_MATCH: Verify drafted tokens using greedy matching.
+        SPECULATIVE_SAMPLE: Verify drafted tokens using speculative sampling.
+    """
+
+    GREEDY_MATCH = "greedy_match"
+    SPECULATIVE_SAMPLE = "speculative_sample"
 
 
 # TODO: migrate to pydantic for validation
@@ -11,19 +36,19 @@ class SpeculateConfig:
     """Configuration for the speculative generation process.
 
     Attributes:
-        drafter_model_name (str): Name of the drafter model.
-        verifier_model_name (str): Name of the verifier model.
-        max_new_tokens (int): Maximum number of new tokens to generate.
-        sample_strategy (SampleStrategy): Sampling strategy for generation.
+        drafter_model_name (str): Used for loading the underlying `transformers` model for drafting.
+        verifier_model_name (str): Used for loading the underlying `transformers` model for verification.
+        sample_strategy (SampleStrategy): Sampling strategy for token drafting.
+        verify_strategy (VerifyStrategy): Verification strategy for drafted tokens.
         num_draft_tokens (int): Number of tokens to draft in each speculation step.
         streaming (bool): Whether to enable streaming output.
     """
 
     drafter_model_name: str = ""
     verifier_model_name: str = ""
-    max_new_tokens: int = 0
-    num_draft_tokens: int = 0
     sample_strategy: SampleStrategy = SampleStrategy.GREEDY
+    verify_strategy: VerifyStrategy = VerifyStrategy.GREEDY_MATCH
+    num_draft_tokens: int = 0
     streaming: bool = False
 
     @staticmethod
@@ -41,7 +66,10 @@ class SpeculateConfig:
 
         try:
             config_dict = {
-                "decode_method": general_configs.get("decode_method", "greedy"),
+                "decode_method": general_configs.get("decode_method", SampleStrategy.GREEDY),
+                "verify_method": general_configs.get(
+                    "verify_method", VerifyStrategy.SPECULATIVE_SAMPLE
+                ),
                 "max_new_tokens": general_configs.get("max_new_tokens", 1024),
                 "streaming": general_configs.get("streaming", False),
                 "drafter_model_name": config_dict["draft"]["model_name"],
@@ -59,9 +87,6 @@ class SpeculateConfig:
         Raises:
             ValueError: If any configuration value is invalid.
         """
-        if self.max_new_tokens <= 0:
-            raise ValueError("max_new_tokens must be a positive integer.")
-
         if self.drafter_model_name == "" or self.verifier_model_name == "":
             raise ValueError("Model names must be specified in the config.")
 

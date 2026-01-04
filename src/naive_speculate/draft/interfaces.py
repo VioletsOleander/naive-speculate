@@ -4,7 +4,7 @@ if TYPE_CHECKING:
     import torch
 
     from naive_speculate.infer import KVCache
-    from naive_speculate.utils.sample import SampleStrategy
+    from naive_speculate.utils.config import SampleStrategy
 
 
 class DraftResult(NamedTuple):

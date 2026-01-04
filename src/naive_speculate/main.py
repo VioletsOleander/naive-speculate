@@ -27,7 +27,8 @@ def main() -> int:
         speculative_decoder = dependencies.speculative_decoder
         _output_ids = speculative_decoder.speculative_decode(
             query_token_ids=input_ids,
-            draft_strategy=dependencies.draft_strategy,
+            num_draft_tokens=dependencies.num_draft_tokens,
+            sample_strategy=dependencies.draft_strategy,
             verify_strategy=dependencies.verify_strategy,
         )
 

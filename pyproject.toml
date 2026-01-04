@@ -100,3 +100,7 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 # allow using asserts in tests
 "tests/**" = ["S101"]
+
+[tool.pylint."messages control"]
+disable = "all"
+enable = ["cyclic-import"]

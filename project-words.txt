@@ -11,5 +11,6 @@ keepdim
 kvcache
 layerwise
 multinomial
+pylint
 qwen
 Qwen

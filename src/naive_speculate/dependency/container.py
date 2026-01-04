@@ -6,14 +6,13 @@ from typing import TYPE_CHECKING
 
 from transformers import AutoTokenizer, PreTrainedTokenizerFast
 
-from naive_speculate.speculate import VerifyStrategy
 from naive_speculate.utils.config import SpeculateConfig
-from naive_speculate.utils.sample import SampleStrategy
 from naive_speculate.utils.tokenizer import Tokenizer
 
 if TYPE_CHECKING:
     from naive_speculate.infer import Inferencer
     from naive_speculate.speculate import SpeculativeDecoder
+    from naive_speculate.utils.config import SampleStrategy, VerifyStrategy
 
 
 class SupportedModelFamilies(StrEnum):
@@ -44,20 +43,19 @@ class DependencyContainer:
         return SpeculateConfig.from_file(self.config_path)
 
     @cached_property
+    def num_draft_tokens(self) -> int:
+        """Number of tokens to draft in each speculative decoding step."""
+        return self.speculate_config.num_draft_tokens
+
+    @cached_property
     def draft_strategy(self) -> SampleStrategy:
         """Sampling strategy for drafting."""
         return self.speculate_config.sample_strategy
 
     @cached_property
     def verify_strategy(self) -> VerifyStrategy:
-        """Sampling strategy for the verification."""
-        match self.draft_strategy:
-            case SampleStrategy.GREEDY:
-                return VerifyStrategy.GREEDY_MATCH
-            case SampleStrategy.RANDOM:
-                return VerifyStrategy.SPECULATIVE_SAMPLE
-            case _:
-                raise ValueError(f"Unsupported draft strategy: {self.draft_strategy}")
+        """Verification strategy for speculative decoding."""
+        return self.speculate_config.verify_strategy
 
     @cached_property
     def context(self) -> list[dict[str, str]]:
@@ -133,7 +131,6 @@ class DependencyContainer:
 
         speculative_decoder_class = impl_module.SpeculativeDecoder
         self._speculative_decoder = speculative_decoder_class(
-            speculate_config=self.speculate_config,
             drafter=self._drafter,
             scorer=self._scorer,
             drafter_kvcache=self._drafter_kv_cache,
