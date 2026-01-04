@@ -6,6 +6,7 @@ huggingface's
 impls
 inferencer
 Inferencer
+inferencers
 keepdim
 kvcache
 layerwise

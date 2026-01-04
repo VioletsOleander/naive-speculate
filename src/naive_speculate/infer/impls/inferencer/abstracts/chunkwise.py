@@ -1,10 +1,11 @@
+from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 import torch
 
 from naive_speculate.infer import DecodeOutput
 
-from .base import BaseInferencer
+from .basic import BasicInferencer
 from .utils.collection import OutputCollection
 
 if TYPE_CHECKING:
@@ -12,23 +13,25 @@ if TYPE_CHECKING:
     from naive_speculate.utils.sample import SampleStrategy
 
 
-class ChunkwiseDecodeInferencer(BaseInferencer):
+class ChunkwiseDecodeInferencer(BasicInferencer):
     """ChunkwiseDecodeInferencer implements chunk-wise decoding to reduce device synchronization overhead.
 
     ChunkwiseDecodeInferencer only checks eos token after each `decode_chunk_size` iterations.
 
-    Refers to base class `BaseInferencer` for more details.
+    ChunkwiseDecodeInferencer expects inheriting classes to implement the following additional abstract methods:
+    - `decode_chunk_size`: Return the number of tokens to decode before checking for EOS token.
 
-    Attributes:
-        decode_chunk_size (int): EOS token check interval during decoding, default to 8.
-            Used as a simple trick to reduce device synchronization overhead.
+    Refers to base class `BaseInferencer` for more details.
     """
 
-    decode_chunk_size: int
+    @property
+    @abstractmethod
+    def decode_chunk_size(self) -> int:
+        """Number of tokens to decode before checking for EOS token.
 
-    def __init__(self, decode_chunk_size: int = 8) -> None:
-        super().__init__()
-        self.decode_chunk_size = decode_chunk_size
+        Used as a simple trick to reduce device synchronization overhead.
+        """
+        ...
 
     @torch.no_grad()
     def decode(

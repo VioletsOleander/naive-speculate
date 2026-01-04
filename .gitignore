@@ -9,6 +9,8 @@ wheels/
 *.toml
 !pyproject.toml
 !config.example.toml
+*.json
+!context.example.json
 
 *.sh
 

@@ -14,11 +14,11 @@ class Tokenizer:
         tokenizer (PreTrainedTokenizerFast): The huggingface tokenizer instance.
     """
 
-    tokenizer: PreTrainedTokenizerFast
+    _tokenizer: PreTrainedTokenizerFast
 
     def __init__(self, tokenizer: PreTrainedTokenizerFast) -> None:
-        self.tokenizer = tokenizer
-        self.tokenizer.padding_side = "left"
+        self._tokenizer = tokenizer
+        self._tokenizer.padding_side = "left"
 
     @overload
     def tokenize(
@@ -53,7 +53,7 @@ class Tokenizer:
         Returns:
             BatchEncoding | tuple[Tensor, Tensor]: Tokenized output.
         """
-        tokenized = self.tokenizer(input_texts, return_tensors="pt", padding=True)
+        tokenized = self._tokenizer(input_texts, return_tensors="pt", padding=True)
 
         if not return_tensors:
             return tokenized
@@ -73,7 +73,7 @@ class Tokenizer:
         Returns:
             list[str]: Detokenized strings. Length: `[batch_size]`.
         """
-        return self.tokenizer.batch_decode(token_ids, skip_special_tokens=skip_special_tokens)
+        return self._tokenizer.batch_decode(token_ids, skip_special_tokens=skip_special_tokens)
 
     def apply_chat_template(
         self, messages: list[dict[str, str]], *, enable_thinking: bool = True
@@ -88,7 +88,7 @@ class Tokenizer:
         Returns:
             str: Constructed prompt text.
         """
-        text = self.tokenizer.apply_chat_template(
+        text = self._tokenizer.apply_chat_template(
             messages,
             tokenize=False,
             add_generation_prompt=True,

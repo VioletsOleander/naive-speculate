@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
 
-class BaseInferencer(InferencerProtocol):
+class BasicInferencer(InferencerProtocol):
     """Implements `prefill` and `decode` method of `Inferencer` protocol.
 
     BaseInferencer utilize `forward` method to provide simple implementations
@@ -24,9 +24,6 @@ class BaseInferencer(InferencerProtocol):
     - `forward`: Forward with query token ids and return the computed logits.
     - `_eos_token_id`: Return the EOS token id.
     """
-
-    def __init__(self) -> None:
-        super().__init__()
 
     @property
     @abstractmethod
