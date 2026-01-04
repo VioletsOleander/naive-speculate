@@ -1,6 +1,6 @@
 import tomllib
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import StrEnum, auto
 from pathlib import Path
 
 
@@ -8,14 +8,14 @@ class SampleStrategy(StrEnum):
     """Sampling strategies for token generation.
 
     Attributes:
-        RANDOM = "random": Sample tokens probabilistically according to
+        RANDOM: Sample tokens probabilistically according to
             the softmax distribution over `token_logits`.
-        GREEDY = "greedy": Always select the token with
+        GREEDY: Always select the token with
             the highest probability (argmax) from `token_logits`.
     """
 
-    RANDOM = "random"
-    GREEDY = "greedy"
+    RANDOM = auto()
+    GREEDY = auto()
 
 
 class VerifyStrategy(StrEnum):
@@ -26,8 +26,8 @@ class VerifyStrategy(StrEnum):
         SPECULATIVE_SAMPLE: Verify drafted tokens using speculative sampling.
     """
 
-    GREEDY_MATCH = "greedy_match"
-    SPECULATIVE_SAMPLE = "speculative_sample"
+    GREEDY_MATCH = auto()
+    SPECULATIVE_SAMPLE = auto()
 
 
 # TODO: migrate to pydantic for validation
@@ -66,9 +66,9 @@ class SpeculateConfig:
 
         try:
             config_dict = {
-                "decode_method": general_configs.get("decode_method", SampleStrategy.GREEDY),
-                "verify_method": general_configs.get(
-                    "verify_method", VerifyStrategy.SPECULATIVE_SAMPLE
+                "sample_strategy": general_configs.get("sample_strategy", SampleStrategy.GREEDY),
+                "verify_strategy": general_configs.get(
+                    "verify_strategy", VerifyStrategy.SPECULATIVE_SAMPLE
                 ),
                 "max_new_tokens": general_configs.get("max_new_tokens", 1024),
                 "streaming": general_configs.get("streaming", False),
