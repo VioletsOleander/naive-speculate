@@ -5,6 +5,9 @@ get-tools:
 gen-schema:
     uv run --group dev scripts/generate_schema.py
 
+gen-api-ref:
+    uv run --group dev scripts/generate_api_reference.py
+
 format:
     uv run ruff format src tests scripts
 

@@ -6,14 +6,22 @@ dist/
 wheels/
 *.egg-info
 
+# TOML
 *.toml
 !pyproject.toml
 !config.example.toml
+!zensical.toml
+
+# JSON
 *.json
 !context.example.json
 !config-schema.json
 
 *.sh
+
+# DOCS
+/site/
+/docs/reference/
 
 # Virtual environments
 .venv
