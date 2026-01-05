@@ -9,7 +9,7 @@ def _indexing_or_mask(tensor: torch.Tensor, idx: torch.Tensor) -> torch.Tensor:
     return indexed_tensor * (idx < tensor.size(0))
 
 
-def speculative_sample(
+def speculative_sampling(
     target_dists: torch.Tensor,
     proposal_dists: torch.Tensor,
     candidate_tokens: torch.Tensor,

@@ -7,7 +7,7 @@ from naive_speculate.draft import DraftResult
 
 if TYPE_CHECKING:
     from naive_speculate.infer import Inferencer, KVCache
-    from naive_speculate.utils.sample import SampleStrategy
+    from naive_speculate.utils.config import SampleStrategy
 
 
 class Drafter(DrafterProtocol):

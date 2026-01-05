@@ -11,6 +11,7 @@ wheels/
 !config.example.toml
 *.json
 !context.example.json
+!config-schema.json
 
 *.sh
 

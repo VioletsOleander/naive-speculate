@@ -1,20 +1,6 @@
-from enum import StrEnum
-
 import torch
 
-
-class SampleStrategy(StrEnum):
-    """Sampling strategies for token generation.
-
-    Attributes:
-        RANDOM = "random": Sample tokens probabilistically according to
-            the softmax distribution over `token_logits`.
-        GREEDY = "greedy": Always select the token with
-            the highest probability (argmax) from `token_logits`.
-    """
-
-    RANDOM = "random"
-    GREEDY = "greedy"
+from .config import SampleStrategy
 
 
 def sample_tokens(token_logits: torch.Tensor, sampling_strategy: SampleStrategy) -> torch.Tensor:

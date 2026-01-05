@@ -1,35 +1,21 @@
-from enum import StrEnum
-from functools import cached_property
 from typing import TYPE_CHECKING
 
 import torch
 
-from .utils import greedy_match, speculative_sample
+from naive_speculate.utils.config import VerifyStrategy
+
+from .utils import greedy_match, speculative_sampling
 
 if TYPE_CHECKING:
     from naive_speculate.draft import Drafter
     from naive_speculate.infer import KVCache
     from naive_speculate.score import Scorer
-    from naive_speculate.utils.config import SpeculateConfig
-    from naive_speculate.utils.sample import SampleStrategy
-
-
-class VerifyStrategy(StrEnum):
-    """Verification strategies for speculative decoding.
-
-    Attributes:
-        GREEDY_MATCH: Verify drafted tokens using greedy matching.
-        SPECULATIVE_SAMPLE: Verify drafted tokens using speculative sampling.
-    """
-
-    GREEDY_MATCH = "greedy_match"
-    SPECULATIVE_SAMPLE = "speculative_sample"
+    from naive_speculate.utils.config import SampleStrategy
 
 
 class SpeculativeDecoder:
     """Performs speculative decoding using a drafter and a scorer."""
 
-    _speculate_config: SpeculateConfig
     _drafter: Drafter
     _scorer: Scorer
     _drafter_kvcache: KVCache
@@ -37,51 +23,42 @@ class SpeculativeDecoder:
 
     def __init__(
         self,
-        speculate_config: SpeculateConfig,
         drafter: Drafter,
         scorer: Scorer,
         drafter_kvcache: KVCache,
         scorer_kvcache: KVCache,
     ) -> None:
-        self._speculate_config = speculate_config
         self._drafter = drafter
         self._scorer = scorer
         self._drafter_kvcache = drafter_kvcache
         self._scorer_kvcache = scorer_kvcache
 
-    @cached_property
-    def num_draft_tokens(self) -> int:
-        return self._speculate_config.num_draft_tokens
-
-    @cached_property
-    def sample_strategy(self) -> SampleStrategy:
-        return self._speculate_config.sample_strategy
-
     def speculative_decode(
         self,
         query_token_ids: torch.Tensor,
-        draft_strategy: SampleStrategy,
+        num_draft_tokens: int,
+        sample_strategy: SampleStrategy,
         verify_strategy: VerifyStrategy,
     ) -> torch.Tensor:
         """Perform speculative decoding.
 
         Currently supports `batch_size=1` only.
 
-        `draft_strategy` defines how the drafter samples draft tokens.
+        `sample_strategy` defines how the drafter samples draft tokens.
         `verify_strategy` defines how the drafted tokens are verified.
 
         The `GREEDY_MATCH` verification strategy is legal to combine with any drafter sampling strategy.
 
-        However, to achieve real speedup, it is suggested to use `SPECULATIVE_SAMPLE` verification
+        However, to achieve real speedup, it is suggested to use `SPECULATIVE_SAMPLING` verification
         strategy in favor of `GREEDY_MATCH`, because the latter normally leads to more rejections,
         since it requires exact matches between the drafter's greedy tokens and the target model's greedy tokens.
 
         Also, greedy decoding normally performs worse than random sampling decoding in terms of generation quality.
 
-        The `SPECULATIVE_SAMPLE` verification strategy is legal to combine with any drafter
+        The `SPECULATIVE_SAMPLING` verification strategy is legal to combine with any drafter
         sampling strategy in definition, as long as the sampling strategy defines a valid proposal distribution.
 
-        However, to achieve real speedup, it is suggested to not use `SPECULATIVE_SAMPLE` verification with
+        However, to achieve real speedup, it is suggested to not use `SPECULATIVE_SAMPLING` verification with
         drafter greedy sampling.
 
         The reason is: If the drafter uses greedy sampling, speculative sampling for verification will
@@ -92,7 +69,8 @@ class SpeculativeDecoder:
 
         Args:
             query_token_ids (torch.Tensor): Ids of the query tokens. Shape: `[batch_size, num_query_tokens]`.
-            draft_strategy (SampleStrategy): Sampling strategy for drafter.
+            num_draft_tokens (int): Number of tokens to draft.
+            sample_strategy (SampleStrategy): Sampling strategy for drafting tokens.
             verify_strategy (VerifyStrategy): Verification strategy for drafted tokens.
 
         Returns:
@@ -102,8 +80,8 @@ class SpeculativeDecoder:
         draft_out = self._drafter.draft(
             query_token_ids=query_token_ids,
             kv_cache=self._drafter_kvcache,
-            num_draft_tokens=self.num_draft_tokens,
-            sample_strategy=draft_strategy,
+            num_draft_tokens=num_draft_tokens,
+            sample_strategy=sample_strategy,
         )
 
         # 2. Score
@@ -121,8 +99,8 @@ class SpeculativeDecoder:
         target_dists = torch.softmax(token_scores, dim=-1)
 
         match verify_strategy:
-            case VerifyStrategy.SPECULATIVE_SAMPLE:
-                rejected_idx, resampled_token = speculative_sample(
+            case VerifyStrategy.SPECULATIVE_SAMPLING:
+                rejected_idx, resampled_token = speculative_sampling(
                     target_dists=target_dists.squeeze(0),
                     proposal_dists=proposal_dists.squeeze(0),
                     candidate_tokens=draft_out.token_ids.squeeze(0),

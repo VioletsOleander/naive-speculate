@@ -6,14 +6,13 @@ from typing import TYPE_CHECKING
 
 from transformers import AutoTokenizer, PreTrainedTokenizerFast
 
-from naive_speculate.speculate import VerifyStrategy
 from naive_speculate.utils.config import SpeculateConfig
-from naive_speculate.utils.sample import SampleStrategy
 from naive_speculate.utils.tokenizer import Tokenizer
 
 if TYPE_CHECKING:
     from naive_speculate.infer import Inferencer
     from naive_speculate.speculate import SpeculativeDecoder
+    from naive_speculate.utils.config import SampleStrategy, VerifyStrategy
 
 
 class SupportedModelFamilies(StrEnum):
@@ -41,23 +40,22 @@ class DependencyContainer:
     @cached_property
     def speculate_config(self) -> SpeculateConfig:
         """Configuration loaded from the specified config file."""
-        return SpeculateConfig.from_file(self.config_path)
+        return SpeculateConfig.from_toml(self.config_path)
+
+    @cached_property
+    def num_draft_tokens(self) -> int:
+        """Number of tokens to draft in each speculative decoding step."""
+        return self.speculate_config.draft.num_draft_tokens
 
     @cached_property
     def draft_strategy(self) -> SampleStrategy:
         """Sampling strategy for drafting."""
-        return self.speculate_config.sample_strategy
+        return self.speculate_config.draft.sample_strategy
 
     @cached_property
     def verify_strategy(self) -> VerifyStrategy:
-        """Sampling strategy for the verification."""
-        match self.draft_strategy:
-            case SampleStrategy.GREEDY:
-                return VerifyStrategy.GREEDY_MATCH
-            case SampleStrategy.RANDOM:
-                return VerifyStrategy.SPECULATIVE_SAMPLE
-            case _:
-                raise ValueError(f"Unsupported draft strategy: {self.draft_strategy}")
+        """Verification strategy for speculative decoding."""
+        return self.speculate_config.verify.verify_strategy
 
     @cached_property
     def context(self) -> list[dict[str, str]]:
@@ -71,7 +69,7 @@ class DependencyContainer:
     def tokenizer(self) -> Tokenizer:
         """The initialized tokenizer instance."""
         hf_tokenizer: PreTrainedTokenizerFast = AutoTokenizer.from_pretrained(
-            self.speculate_config.drafter_model_name
+            self.speculate_config.draft.model_name
         )
 
         return Tokenizer(tokenizer=hf_tokenizer)
@@ -103,10 +101,10 @@ class DependencyContainer:
             return inferencer_class(model_name=model_name)
 
         self._drafter_inferencer = provide_inferencer(
-            model_name=self.speculate_config.drafter_model_name
+            model_name=self.speculate_config.draft.model_name
         )
         self._scorer_inferencer = provide_inferencer(
-            model_name=self.speculate_config.verifier_model_name
+            model_name=self.speculate_config.verify.model_name,
         )
 
     def _init_drafter(self) -> None:
@@ -133,7 +131,6 @@ class DependencyContainer:
 
         speculative_decoder_class = impl_module.SpeculativeDecoder
         self._speculative_decoder = speculative_decoder_class(
-            speculate_config=self.speculate_config,
             drafter=self._drafter,
             scorer=self._scorer,
             drafter_kvcache=self._drafter_kv_cache,
