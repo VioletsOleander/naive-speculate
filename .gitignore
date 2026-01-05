@@ -9,11 +9,15 @@ wheels/
 *.toml
 !pyproject.toml
 !config.example.toml
+!zensical.toml
+
 *.json
 !context.example.json
 !config-schema.json
 
 *.sh
+
+/site/
 
 # Virtual environments
 .venv
