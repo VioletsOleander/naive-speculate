@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: 3.x
       - run: python scripts/generate_api_reference.py
-      - run: pip install zensical
+      - run: pip install zensical mkdocstrings-python
       - run: zensical build --clean
       - uses: actions/upload-pages-artifact@v4
         with:
