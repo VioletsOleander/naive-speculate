@@ -1,10 +1,10 @@
 {
   "$defs": {
     "DraftConfig": {
-      "description": "Configuration related to the drafting process in speculative decoding.\n\nAttributes:\n    model_name (str): Name of the underlying `transformers` model used for drafting.\n        This name will be used to load the model and tokenizer from `transformers` library.\n        Example: `\"Qwen3/Qwen3-0.6B\"`\n    sample_strategy (SampleStrategy): Sampling strategy for token drafting.\n        Options: `(\"random\", \"greedy\")`, case sensitive.\n        Default to `\"random\"`.\n    num_draft_tokens (int): Number of tokens to draft in each speculation step.\n        Must be a positive integer.\n        Default to `5`.",
+      "description": "Configuration related to the drafting process in speculative decoding.\n\nAttributes:\n    model_name (str): Name of the underlying `transformers` model used for drafting.\n        This name will be used to load the model and tokenizer from `transformers` library.\n        Example: `\"Qwen/Qwen3-0.6B\"`\n    sample_strategy (SampleStrategy): Sampling strategy for token drafting.\n        Options: `(\"random\", \"greedy\")`, case sensitive.\n        Default to `\"random\"`.\n    num_draft_tokens (int): Number of tokens to draft in each speculation step.\n        Must be a positive integer.\n        Default to `5`.",
       "properties": {
         "model_name": {
-          "description": "Name of the underlying `transformers` model used for drafting.\nThis name will be used to load the model and tokenizer from `transformers` library.\nExample: `\"Qwen3/Qwen3-0.6B\"`",
+          "description": "Name of the underlying `transformers` model used for drafting.\nThis name will be used to load the model and tokenizer from `transformers` library.\nExample: `\"Qwen/Qwen3-0.6B\"`",
           "title": "Model Name",
           "type": "string"
         },
@@ -16,6 +16,7 @@
         "num_draft_tokens": {
           "default": 5,
           "description": "Number of tokens to draft in each speculation step.\nMust be a positive integer.\nDefault to `5`.",
+          "exclusiveMinimum": 0,
           "title": "Num Draft Tokens",
           "type": "integer"
         }
@@ -36,10 +37,10 @@
       "type": "string"
     },
     "VerifyConfig": {
-      "description": "Configuration related to the verification process in speculative decoding.\n\nAttributes:\n    model_name (str): Name of the underlying `transformers` model used for verification.\n        This name will be used to load the model and tokenizer from `transformers` library.\n        Example: `\"Qwen3/Qwen3-8B\"`\n    verify_strategy (VerifyStrategy): Verification strategy for drafted tokens.\n        Options: `(\"speculative_sampling\", \"greedy_match\")`, case sensitive.\n        Default to `\"speculative_sampling\"`.",
+      "description": "Configuration related to the verification process in speculative decoding.\n\nAttributes:\n    model_name (str): Name of the underlying `transformers` model used for verification.\n        This name will be used to load the model and tokenizer from `transformers` library.\n        Example: `\"Qwen/Qwen3-8B\"`\n    verify_strategy (VerifyStrategy): Verification strategy for drafted tokens.\n        Options: `(\"speculative_sampling\", \"greedy_match\")`, case sensitive.\n        Default to `\"speculative_sampling\"`.",
       "properties": {
         "model_name": {
-          "description": "Name of the underlying `transformers` model used for verification.\nThis name will be used to load the model and tokenizer from `transformers` library.\nExample: `\"Qwen3/Qwen3-8B\"`",
+          "description": "Name of the underlying `transformers` model used for verification.\nThis name will be used to load the model and tokenizer from `transformers` library.\nExample: `\"Qwen/Qwen3-8B\"`",
           "title": "Model Name",
           "type": "string"
         },
