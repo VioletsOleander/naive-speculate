@@ -2,7 +2,7 @@ import tomllib
 from enum import StrEnum, auto
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SampleStrategy(StrEnum):
@@ -35,7 +35,7 @@ class DraftConfig(BaseModel):
     Attributes:
         model_name (str): Name of the underlying `transformers` model used for drafting.
             This name will be used to load the model and tokenizer from `transformers` library.
-            Example: `"Qwen3/Qwen3-0.6B"`
+            Example: `"Qwen/Qwen3-0.6B"`
         sample_strategy (SampleStrategy): Sampling strategy for token drafting.
             Options: `("random", "greedy")`, case sensitive.
             Default to `"random"`.
@@ -46,7 +46,7 @@ class DraftConfig(BaseModel):
 
     model_name: str
     sample_strategy: SampleStrategy = SampleStrategy.RANDOM
-    num_draft_tokens: int = 5
+    num_draft_tokens: int = Field(default=5, gt=0)
 
 
 class VerifyConfig(BaseModel):
@@ -55,7 +55,7 @@ class VerifyConfig(BaseModel):
     Attributes:
         model_name (str): Name of the underlying `transformers` model used for verification.
             This name will be used to load the model and tokenizer from `transformers` library.
-            Example: `"Qwen3/Qwen3-8B"`
+            Example: `"Qwen/Qwen3-8B"`
         verify_strategy (VerifyStrategy): Verification strategy for drafted tokens.
             Options: `("speculative_sampling", "greedy_match")`, case sensitive.
             Default to `"speculative_sampling"`.

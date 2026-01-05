@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import docstring_parser as parser
-from pydantic import BaseModel
 
 from naive_speculate.utils.config import SpeculateConfig
 
