@@ -14,3 +14,5 @@ multinomial
 pylint
 qwen
 Qwen
+submodel
+submodels

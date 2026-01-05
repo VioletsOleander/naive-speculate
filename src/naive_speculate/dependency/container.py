@@ -40,22 +40,22 @@ class DependencyContainer:
     @cached_property
     def speculate_config(self) -> SpeculateConfig:
         """Configuration loaded from the specified config file."""
-        return SpeculateConfig.from_file(self.config_path)
+        return SpeculateConfig.from_toml(self.config_path)
 
     @cached_property
     def num_draft_tokens(self) -> int:
         """Number of tokens to draft in each speculative decoding step."""
-        return self.speculate_config.num_draft_tokens
+        return self.speculate_config.draft.num_draft_tokens
 
     @cached_property
     def draft_strategy(self) -> SampleStrategy:
         """Sampling strategy for drafting."""
-        return self.speculate_config.sample_strategy
+        return self.speculate_config.draft.sample_strategy
 
     @cached_property
     def verify_strategy(self) -> VerifyStrategy:
         """Verification strategy for speculative decoding."""
-        return self.speculate_config.verify_strategy
+        return self.speculate_config.verify.verify_strategy
 
     @cached_property
     def context(self) -> list[dict[str, str]]:
@@ -69,7 +69,7 @@ class DependencyContainer:
     def tokenizer(self) -> Tokenizer:
         """The initialized tokenizer instance."""
         hf_tokenizer: PreTrainedTokenizerFast = AutoTokenizer.from_pretrained(
-            self.speculate_config.drafter_model_name
+            self.speculate_config.draft.model_name
         )
 
         return Tokenizer(tokenizer=hf_tokenizer)
@@ -101,10 +101,10 @@ class DependencyContainer:
             return inferencer_class(model_name=model_name)
 
         self._drafter_inferencer = provide_inferencer(
-            model_name=self.speculate_config.drafter_model_name
+            model_name=self.speculate_config.draft.model_name
         )
         self._scorer_inferencer = provide_inferencer(
-            model_name=self.speculate_config.verifier_model_name
+            model_name=self.speculate_config.verify.model_name,
         )
 
     def _init_drafter(self) -> None:

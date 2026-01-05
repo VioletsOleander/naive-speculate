@@ -4,7 +4,7 @@ import torch
 
 from naive_speculate.utils.config import VerifyStrategy
 
-from .utils import greedy_match, speculative_sample
+from .utils import greedy_match, speculative_sampling
 
 if TYPE_CHECKING:
     from naive_speculate.draft import Drafter
@@ -49,16 +49,16 @@ class SpeculativeDecoder:
 
         The `GREEDY_MATCH` verification strategy is legal to combine with any drafter sampling strategy.
 
-        However, to achieve real speedup, it is suggested to use `SPECULATIVE_SAMPLE` verification
+        However, to achieve real speedup, it is suggested to use `SPECULATIVE_SAMPLING` verification
         strategy in favor of `GREEDY_MATCH`, because the latter normally leads to more rejections,
         since it requires exact matches between the drafter's greedy tokens and the target model's greedy tokens.
 
         Also, greedy decoding normally performs worse than random sampling decoding in terms of generation quality.
 
-        The `SPECULATIVE_SAMPLE` verification strategy is legal to combine with any drafter
+        The `SPECULATIVE_SAMPLING` verification strategy is legal to combine with any drafter
         sampling strategy in definition, as long as the sampling strategy defines a valid proposal distribution.
 
-        However, to achieve real speedup, it is suggested to not use `SPECULATIVE_SAMPLE` verification with
+        However, to achieve real speedup, it is suggested to not use `SPECULATIVE_SAMPLING` verification with
         drafter greedy sampling.
 
         The reason is: If the drafter uses greedy sampling, speculative sampling for verification will
@@ -99,8 +99,8 @@ class SpeculativeDecoder:
         target_dists = torch.softmax(token_scores, dim=-1)
 
         match verify_strategy:
-            case VerifyStrategy.SPECULATIVE_SAMPLE:
-                rejected_idx, resampled_token = speculative_sample(
+            case VerifyStrategy.SPECULATIVE_SAMPLING:
+                rejected_idx, resampled_token = speculative_sampling(
                     target_dists=target_dists.squeeze(0),
                     proposal_dists=proposal_dists.squeeze(0),
                     candidate_tokens=draft_out.token_ids.squeeze(0),

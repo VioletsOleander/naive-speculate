@@ -1,21 +1,20 @@
 import tomllib
-from dataclasses import dataclass
-from enum import StrEnum
+from enum import StrEnum, auto
 from pathlib import Path
+
+from pydantic import BaseModel
 
 
 class SampleStrategy(StrEnum):
     """Sampling strategies for token generation.
 
     Attributes:
-        RANDOM = "random": Sample tokens probabilistically according to
-            the softmax distribution over `token_logits`.
-        GREEDY = "greedy": Always select the token with
-            the highest probability (argmax) from `token_logits`.
+        RANDOM: Sample tokens probabilistically according to the token distribution over vocabulary.
+        GREEDY: Always select the token with the highest probability (argmax).
     """
 
-    RANDOM = "random"
-    GREEDY = "greedy"
+    RANDOM = auto()
+    GREEDY = auto()
 
 
 class VerifyStrategy(StrEnum):
@@ -23,72 +22,73 @@ class VerifyStrategy(StrEnum):
 
     Attributes:
         GREEDY_MATCH: Verify drafted tokens using greedy matching.
-        SPECULATIVE_SAMPLE: Verify drafted tokens using speculative sampling.
+        SPECULATIVE_SAMPLING: Verify drafted tokens using speculative sampling.
     """
 
-    GREEDY_MATCH = "greedy_match"
-    SPECULATIVE_SAMPLE = "speculative_sample"
+    GREEDY_MATCH = auto()
+    SPECULATIVE_SAMPLING = auto()
 
 
-# TODO: migrate to pydantic for validation
-@dataclass
-class SpeculateConfig:
-    """Configuration for the speculative generation process.
+class DraftConfig(BaseModel):
+    """Configuration related to the drafting process in speculative decoding.
 
     Attributes:
-        drafter_model_name (str): Used for loading the underlying `transformers` model for drafting.
-        verifier_model_name (str): Used for loading the underlying `transformers` model for verification.
+        model_name (str): Name of the underlying `transformers` model used for drafting.
+            This name will be used to load the model and tokenizer from `transformers` library.
+            Example: `"Qwen3/Qwen3-0.6B"`
         sample_strategy (SampleStrategy): Sampling strategy for token drafting.
-        verify_strategy (VerifyStrategy): Verification strategy for drafted tokens.
+            Options: `("random", "greedy")`, case sensitive.
+            Default to `"random"`.
         num_draft_tokens (int): Number of tokens to draft in each speculation step.
-        streaming (bool): Whether to enable streaming output.
+            Must be a positive integer.
+            Default to `5`.
     """
 
-    drafter_model_name: str = ""
-    verifier_model_name: str = ""
-    sample_strategy: SampleStrategy = SampleStrategy.GREEDY
-    verify_strategy: VerifyStrategy = VerifyStrategy.GREEDY_MATCH
-    num_draft_tokens: int = 0
-    streaming: bool = False
+    model_name: str
+    sample_strategy: SampleStrategy = SampleStrategy.RANDOM
+    num_draft_tokens: int = 5
 
-    @staticmethod
-    def from_dict(config_dict: dict) -> SpeculateConfig:
-        config = SpeculateConfig(**config_dict)
-        config.validate_self()
-        return config
 
-    @staticmethod
-    def from_file(config_path: str) -> SpeculateConfig:
-        with Path(config_path).open("rb") as f:
+class VerifyConfig(BaseModel):
+    """Configuration related to the verification process in speculative decoding.
+
+    Attributes:
+        model_name (str): Name of the underlying `transformers` model used for verification.
+            This name will be used to load the model and tokenizer from `transformers` library.
+            Example: `"Qwen3/Qwen3-8B"`
+        verify_strategy (VerifyStrategy): Verification strategy for drafted tokens.
+            Options: `("speculative_sampling", "greedy_match")`, case sensitive.
+            Default to `"speculative_sampling"`.
+    """
+
+    model_name: str
+    verify_strategy: VerifyStrategy = VerifyStrategy.SPECULATIVE_SAMPLING
+
+
+class SpeculateConfig(BaseModel):
+    """Configuration for the speculative decoding process.
+
+    Refers to the docstring of `DraftConfig` and `VerifyConfig` for more details.
+
+    Attributes:
+        draft (DraftConfig): Configuration for the drafting process.
+        verify (VerifyConfig): Configuration for the verification process.
+    """
+
+    draft: DraftConfig
+    verify: VerifyConfig
+
+    @classmethod
+    def from_toml(cls, toml_path: str) -> SpeculateConfig:
+        """Load configuration from a TOML file.
+
+        Args:
+            toml_path (str): Path to the TOML configuration file.
+
+        Returns:
+            SpeculateConfig: An instance of SpeculateConfig populated with values from the TOML file.
+        """
+        with Path(toml_path).open("rb") as f:
             config_dict = tomllib.load(f)
 
-        general_configs = config_dict.get("general", {})
-
-        try:
-            config_dict = {
-                "decode_method": general_configs.get("decode_method", SampleStrategy.GREEDY),
-                "verify_method": general_configs.get(
-                    "verify_method", VerifyStrategy.SPECULATIVE_SAMPLE
-                ),
-                "max_new_tokens": general_configs.get("max_new_tokens", 1024),
-                "streaming": general_configs.get("streaming", False),
-                "drafter_model_name": config_dict["draft"]["model_name"],
-                "num_draft_tokens": config_dict["draft"].get("num_draft_tokens", 5),
-                "verifier_model_name": config_dict["verify"]["model_name"],
-            }
-        except KeyError as e:
-            raise KeyError(f"Missing required configuration key: {e}") from e
-
-        return SpeculateConfig.from_dict(config_dict)
-
-    def validate_self(self) -> None:
-        """Validate the configuration values.
-
-        Raises:
-            ValueError: If any configuration value is invalid.
-        """
-        if self.drafter_model_name == "" or self.verifier_model_name == "":
-            raise ValueError("Model names must be specified in the config.")
-
-        if self.num_draft_tokens <= 0:
-            raise ValueError("num_draft_tokens must be a positive integer.")
+        return cls(**config_dict)

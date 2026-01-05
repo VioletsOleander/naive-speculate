@@ -1,0 +1,83 @@
+{
+  "$defs": {
+    "DraftConfig": {
+      "description": "Configuration related to the drafting process in speculative decoding.\n\nAttributes:\n    model_name (str): Name of the underlying `transformers` model used for drafting.\n        This name will be used to load the model and tokenizer from `transformers` library.\n        Example: `\"Qwen3/Qwen3-0.6B\"`\n    sample_strategy (SampleStrategy): Sampling strategy for token drafting.\n        Options: `(\"random\", \"greedy\")`, case sensitive.\n        Default to `\"random\"`.\n    num_draft_tokens (int): Number of tokens to draft in each speculation step.\n        Must be a positive integer.\n        Default to `5`.",
+      "properties": {
+        "model_name": {
+          "description": "Name of the underlying `transformers` model used for drafting.\nThis name will be used to load the model and tokenizer from `transformers` library.\nExample: `\"Qwen3/Qwen3-0.6B\"`",
+          "title": "Model Name",
+          "type": "string"
+        },
+        "sample_strategy": {
+          "$ref": "#/$defs/SampleStrategy",
+          "default": "random",
+          "description": "Sampling strategy for token drafting.\nOptions: `(\"random\", \"greedy\")`, case sensitive.\nDefault to `\"random\"`."
+        },
+        "num_draft_tokens": {
+          "default": 5,
+          "description": "Number of tokens to draft in each speculation step.\nMust be a positive integer.\nDefault to `5`.",
+          "title": "Num Draft Tokens",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "model_name"
+      ],
+      "title": "DraftConfig",
+      "type": "object"
+    },
+    "SampleStrategy": {
+      "description": "Sampling strategies for token generation.\n\nAttributes:\n    RANDOM: Sample tokens probabilistically according to the token distribution over vocabulary.\n    GREEDY: Always select the token with the highest probability (argmax).",
+      "enum": [
+        "random",
+        "greedy"
+      ],
+      "title": "SampleStrategy",
+      "type": "string"
+    },
+    "VerifyConfig": {
+      "description": "Configuration related to the verification process in speculative decoding.\n\nAttributes:\n    model_name (str): Name of the underlying `transformers` model used for verification.\n        This name will be used to load the model and tokenizer from `transformers` library.\n        Example: `\"Qwen3/Qwen3-8B\"`\n    verify_strategy (VerifyStrategy): Verification strategy for drafted tokens.\n        Options: `(\"speculative_sampling\", \"greedy_match\")`, case sensitive.\n        Default to `\"speculative_sampling\"`.",
+      "properties": {
+        "model_name": {
+          "description": "Name of the underlying `transformers` model used for verification.\nThis name will be used to load the model and tokenizer from `transformers` library.\nExample: `\"Qwen3/Qwen3-8B\"`",
+          "title": "Model Name",
+          "type": "string"
+        },
+        "verify_strategy": {
+          "$ref": "#/$defs/VerifyStrategy",
+          "default": "speculative_sampling",
+          "description": "Verification strategy for drafted tokens.\nOptions: `(\"speculative_sampling\", \"greedy_match\")`, case sensitive.\nDefault to `\"speculative_sampling\"`."
+        }
+      },
+      "required": [
+        "model_name"
+      ],
+      "title": "VerifyConfig",
+      "type": "object"
+    },
+    "VerifyStrategy": {
+      "description": "Verification strategies for speculative decoding.\n\nAttributes:\n    GREEDY_MATCH: Verify drafted tokens using greedy matching.\n    SPECULATIVE_SAMPLING: Verify drafted tokens using speculative sampling.",
+      "enum": [
+        "greedy_match",
+        "speculative_sampling"
+      ],
+      "title": "VerifyStrategy",
+      "type": "string"
+    }
+  },
+  "description": "Configuration for the speculative decoding process.\n\nRefers to the docstring of `DraftConfig` and `VerifyConfig` for more details.\n\nAttributes:\n    draft (DraftConfig): Configuration for the drafting process.\n    verify (VerifyConfig): Configuration for the verification process.",
+  "properties": {
+    "draft": {
+      "$ref": "#/$defs/DraftConfig"
+    },
+    "verify": {
+      "$ref": "#/$defs/VerifyConfig"
+    }
+  },
+  "required": [
+    "draft",
+    "verify"
+  ],
+  "title": "SpeculateConfig",
+  "type": "object"
+}
