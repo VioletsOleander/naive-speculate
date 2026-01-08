@@ -3,9 +3,9 @@ from typing import TYPE_CHECKING, cast, override
 
 from transformers import Qwen3ForCausalLM
 
-from naive_speculate.infer.impls.inferencer.abstracts.basic import BasicInferencer
-from naive_speculate.infer.impls.inferencer.abstracts.chunkwise import ChunkwiseDecodeInferencer
-from naive_speculate.infer.impls.kvcache.dynamic_cache import DynamicNoUpdateCache
+from naive_speculate.infer.impl.inferencer.abstract.basic import BasicInferencer
+from naive_speculate.infer.impl.inferencer.abstract.chunkwise import ChunkwiseDecodeInferencer
+from naive_speculate.infer.impl.kvcache.dynamic_no_update_cache import DynamicNoUpdateCache
 
 if TYPE_CHECKING:
     import torch
@@ -30,6 +30,7 @@ class Qwen3Model:
             torch_dtype="auto",
         )
 
+    @property
     def eos_token_id(self) -> int:
         """Id of the end-of-sequence (EOS) token.
 
@@ -88,13 +89,13 @@ class Qwen3BasicInferencer(BasicInferencer):
 
     qwen3_model: Qwen3Model
 
-    def __init__(self, model_name: str) -> None:
-        self.qwen3_model = Qwen3Model(model_name)
+    def __init__(self, model: Qwen3Model) -> None:
+        self.qwen3_model = model
 
     @cached_property
     @override
     def _eos_token_id(self) -> int:
-        return self.qwen3_model.eos_token_id()
+        return self.qwen3_model.eos_token_id
 
     @override
     def forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor:
@@ -118,8 +119,8 @@ class Qwen3ChunkwiseInferencer(ChunkwiseDecodeInferencer):
     qwen3_model: Qwen3Model
     _decode_chunk_size: int = 8
 
-    def __init__(self, model_name: str) -> None:
-        self.qwen3_model = Qwen3Model(model_name)
+    def __init__(self, model: Qwen3Model) -> None:
+        self.qwen3_model = model
 
     @property
     @override
@@ -129,12 +130,13 @@ class Qwen3ChunkwiseInferencer(ChunkwiseDecodeInferencer):
     @cached_property
     @override
     def _eos_token_id(self) -> int:
-        return self.qwen3_model.eos_token_id()
+        return self.qwen3_model.eos_token_id
 
     @override
     def forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor:
         return self.qwen3_model.forward(query_token_ids, kv_cache)
 
 
+Model = Qwen3Model
 BasicInferencerImpl = Qwen3BasicInferencer
 ChunkwiseInferencerImpl = Qwen3ChunkwiseInferencer

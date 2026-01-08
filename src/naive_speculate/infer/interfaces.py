@@ -5,7 +5,7 @@ if TYPE_CHECKING:
 
     import torch
 
-    from naive_speculate.utils.config import SampleStrategy
+    from naive_speculate.config.strategy import SampleStrategy
 
 
 class PrefillOutput(NamedTuple):
@@ -19,6 +19,18 @@ class PrefillOutput(NamedTuple):
 
     token_ids: torch.Tensor
     token_logits: torch.Tensor
+
+
+class KVState(NamedTuple):
+    """Keys and values tensor for a single transformer layer.
+
+    Attributes:
+        keys (torch.Tensor): The keys tensor.
+        values (torch.Tensor): The values tensor.
+    """
+
+    keys: torch.Tensor
+    values: torch.Tensor
 
 
 class DecodeOutput(NamedTuple):
@@ -38,16 +50,14 @@ class DecodeOutput(NamedTuple):
 class KVCache(Protocol):
     """Stores layerwise key and value tensors, which are used by an Inferencer during inference."""
 
-    def update(self, keys: Sequence[torch.Tensor], values: Sequence[torch.Tensor]) -> None:
+    def update(self, kv_states: Sequence[KVState]) -> None:
         """Update the storage with new key and value tensors.
 
-        `keys` and `values` are sequences of tensors. The length of the sequences
-        should be equal to the number of transformer layers, and each tensor
-        in the sequences corresponds to the key or value tensor of a transformer layer.
+        The length of `kv_states` should be equal to the number of transformer layers,
+        and each `KVState` contains the new key and value tensors for the corresponding layer.
 
         Args:
-            keys (Sequence[torch.Tensor]): New key tensors for each transformer layer.
-            values (Sequence[torch.Tensor]): New value tensors for each transformer layer.
+            kv_states (Sequence[KVState]): New key and value tensors for each transformer layer.
         """
         ...
 
