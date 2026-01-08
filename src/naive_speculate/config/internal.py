@@ -30,7 +30,7 @@ class DraftConfig(BaseModel):
     Attributes:
         sample_strategy (SampleStrategy): The sampling strategy for drafting.
         num_draft_tokens (int): Number of tokens to draft in each iteration.
-        inference (InferenceConfig): Configuration about inference.
+        infer (InferenceConfig): Configuration about inference.
     """
 
     sample_strategy: SampleStrategy
@@ -43,7 +43,7 @@ class VerifyConfig(BaseModel):
 
     Attributes:
         verify_strategy (VerifyStrategy): The verification strategy.
-        inference (InferenceConfig): Configuration about inference.
+        infer (InferenceConfig): Configuration about inference.
     """
 
     verify_strategy: VerifyStrategy

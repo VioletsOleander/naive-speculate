@@ -18,7 +18,7 @@ class DependencyContainer:
     Specifically, it handles the initialization of the tokenizer and the speculative decoder.
 
     Attributes:
-        speculate_config (SpeculateConfig): Configurations used for initializing dependencies.
+        config (SpeculateConfig): Configurations used for initializing dependencies.
     """
 
     def __init__(self, config: SpeculateConfig) -> None:

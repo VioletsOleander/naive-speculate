@@ -63,8 +63,8 @@ class FakeModel:
     def forward(self, _query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor:
         """Do a fake forward pass.
 
-        Return the pre-configured logits passed to `__init__` as the token logits,
-        and update the `kv_cache` with pre-configured keys and values passed to `__init__`.
+        Return the pre-injected pre-configured logits the token logits,
+        and update the `kv_cache` with pre-injected keys and values.
 
         Args:
             _query_token_ids (torch.Tensor): Token ids of shape `[batch_size, num_query_tokens]`.

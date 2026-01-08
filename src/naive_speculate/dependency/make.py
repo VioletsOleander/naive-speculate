@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 def make_inferencer(model_name: str, inferencer_type: InferencerType) -> Inferencer:
     # 1. make model
     family_name = model_name.split("/")[0].upper()
-    match family_name:
+    match ModelFamily[family_name]:
         case ModelFamily.QWEN3:
             import naive_speculate.infer.impl.inferencer.concrete.qwen3 as impl_module  # noqa: PLC0415
 
