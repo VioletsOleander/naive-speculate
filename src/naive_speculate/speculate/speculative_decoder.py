@@ -2,15 +2,15 @@ from typing import TYPE_CHECKING
 
 import torch
 
-from naive_speculate.utils.config import VerifyStrategy
+from naive_speculate.config.strategy import VerifyStrategy
 
 from .utils import greedy_match, speculative_sampling
 
 if TYPE_CHECKING:
+    from naive_speculate.config.strategy import SampleStrategy
     from naive_speculate.draft import Drafter
     from naive_speculate.infer import KVCache
     from naive_speculate.score import Scorer
-    from naive_speculate.utils.config import SampleStrategy
 
 
 class SpeculativeDecoder:

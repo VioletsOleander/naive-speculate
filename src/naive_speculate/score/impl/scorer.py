@@ -34,3 +34,6 @@ class Scorer(ScorerProtocol):
     ) -> ScoreResult:
         token_logits = self.inferencer.forward(query_token_ids=query_token_ids, kv_cache=kv_cache)
         return ScoreResult(token_logits=token_logits)
+
+
+ScorerImpl = Scorer

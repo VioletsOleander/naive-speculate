@@ -9,8 +9,8 @@ from .basic import BasicInferencer
 from .utils.collection import OutputCollection
 
 if TYPE_CHECKING:
+    from naive_speculate.config.strategy import SampleStrategy
     from naive_speculate.infer import KVCache
-    from naive_speculate.utils.config import SampleStrategy
 
 
 class ChunkwiseDecodeInferencer(BasicInferencer):

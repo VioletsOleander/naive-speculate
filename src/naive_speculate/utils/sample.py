@@ -1,6 +1,6 @@
 import torch
 
-from .config import SampleStrategy
+from naive_speculate.config.strategy import SampleStrategy
 
 
 def sample_tokens(token_logits: torch.Tensor, sampling_strategy: SampleStrategy) -> torch.Tensor:

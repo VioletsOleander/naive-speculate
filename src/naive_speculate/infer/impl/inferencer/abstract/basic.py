@@ -12,11 +12,11 @@ from .utils.collection import OutputCollection
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from naive_speculate.utils.config import SampleStrategy
+    from naive_speculate.config.strategy import SampleStrategy
 
 
 class BasicInferencer(InferencerProtocol):
-    """Implements `prefill` and `decode` method of `Inferencer` protocol.
+    """Basic Inferencer implements `prefill` and `decode` method of the `Inferencer` protocol.
 
     BaseInferencer utilize `forward` method to provide simple implementations
     for `prefill` and `decode` methods, and leave the concrete implementation

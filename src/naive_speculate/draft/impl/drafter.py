@@ -6,8 +6,8 @@ from naive_speculate.draft import Drafter as DrafterProtocol
 from naive_speculate.draft import DraftResult
 
 if TYPE_CHECKING:
+    from naive_speculate.config.strategy import SampleStrategy
     from naive_speculate.infer import Inferencer, KVCache
-    from naive_speculate.utils.config import SampleStrategy
 
 
 class Drafter(DrafterProtocol):
@@ -73,3 +73,6 @@ class Drafter(DrafterProtocol):
             draft_token_logits = torch.cat([draft_token_logits, decode_out.token_logits], dim=1)
 
         return DraftResult(draft_token_ids, draft_token_logits)
+
+
+DrafterImpl = Drafter
