@@ -30,4 +30,4 @@ jobs:
         run: uvx ty check
 
       - name: pylint check
-        run: uvx pylint
+        run: uvx pylint src
