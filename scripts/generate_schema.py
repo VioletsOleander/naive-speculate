@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import docstring_parser as parser
 
-from naive_speculate.utils.config import SpeculateConfig
+from naive_speculate.config.external import UserSpeculateConfig
 
 if TYPE_CHECKING:
     from pydantic import BaseModel
@@ -47,7 +47,7 @@ def dump_schema(schema: dict, path: Path) -> None:
 
 if __name__ == "__main__":
     print("Generating configuration schema...")
-    model_cls = populate_field_description(SpeculateConfig)
+    model_cls = populate_field_description(UserSpeculateConfig)
     schema = model_cls.model_json_schema()
     dump_schema(schema, SCHEMA_PATH)
     print(f"Schema saved to {SCHEMA_PATH}")
