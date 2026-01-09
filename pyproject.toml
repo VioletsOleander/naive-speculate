@@ -3,9 +3,7 @@ name = "naive-speculate"
 version = "0.1.0"
 description = "Naive implementation of speculative decoding"
 readme = "README.md"
-authors = [
-    { name = "VioletsOleander", email = "1377232072@qq.com" }
-]
+authors = [{ name = "VioletsOleander", email = "1377232072@qq.com" }]
 requires-python = ">=3.14"
 dependencies = [
     "accelerate>=1.12.0",
@@ -27,6 +25,7 @@ dev = [
     "docstring-parser>=0.17.0",
     "mkdocstrings-python>=2.0.1",
     "pytest>=9.0.1",
+    "pytest-mock>=3.15.1",
     "pytest-repeat>=0.9.4",
     "zensical>=0.0.15",
 ]
@@ -104,6 +103,8 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 # allow using asserts in tests
 "tests/**" = ["S101"]
+# allow using asserts in testing module
+"src/naive_speculate/testing/**" = ["S101"]
 
 [tool.pylint."messages control"]
 disable = "all"

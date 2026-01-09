@@ -4,7 +4,9 @@ from naive_speculate.config.strategy import SampleStrategy
 
 
 def sample_tokens(token_logits: torch.Tensor, sampling_strategy: SampleStrategy) -> torch.Tensor:
-    """Sample token ids from `token_logits` according to `sampling_strategy`.
+    """Sample token ids with `token_logits` according to `sampling_strategy`.
+
+    `token_logits` is expected to be raw logits.
 
     Args:
         token_logits (torch.Tensor): Logits of shape `[batch_size, vocab_size]`.

@@ -28,8 +28,20 @@ class DynamicCache(KVCache, Sequence):
 
     @override
     def crop(self, num_tokens_crop: int) -> None:
+        if num_tokens_crop <= 0:
+            return
+
         length = self.cache.get_seq_length(0)
+        if num_tokens_crop >= length:
+            raise ValueError(
+                f"Cannot crop {num_tokens_crop} tokens from cache with length {length}."
+            )
+
         self.cache.crop(length - num_tokens_crop)
+
+    @override
+    def get_num_tokens(self) -> int:
+        return self.cache.get_seq_length(0)
 
     @overload
     def __getitem__(self, index: int) -> KVState: ...

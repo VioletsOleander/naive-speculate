@@ -76,12 +76,12 @@ def greedy_match(
         candidate_tokens (torch.Tensor): Candidate sequence of shape [num_draft_tokens].
 
     Returns:
-         rejected_idx (torch.Tensor): Index of the first rejected token. Scalar tensor with empty shape.
-             Range: `[0, num_draft_tokens]`.  If no rejection happens,
-             equal to `num_draft_tokens`.
-         resampled_token (torch.Tensor): Resampled token at the rejected position. Scalar tensor with empty shape.
-             If no rejection happens, this will be the token sampled from the extra distribution
-             at the end of `target_dists`.
+        rejected_idx (torch.Tensor): Index of the first rejected token. Scalar tensor with empty shape.
+            Range: `[0, num_draft_tokens]`.  If no rejection happens,
+            equal to `num_draft_tokens`.
+        resampled_token (torch.Tensor): Resampled token at the rejected position. Scalar tensor with empty shape.
+            If no rejection happens, this will be the token sampled from the extra distribution
+            at the end of `target_dists`.
     """
     num_draft_tokens = candidate_tokens.size(0)
 
