@@ -25,7 +25,7 @@ class TestDynamicNoUpdateCacheContract(KVCacheContractTests):
     def test_dynamic_cache_update_xfail(
         self, dynamic_no_update_cache: DynamicNoUpdateCache, kv_states: list[KVState]
     ) -> None:
-        return super().update_test(dynamic_no_update_cache, kv_states)
+        super().update_test(dynamic_no_update_cache, kv_states)
 
     def test_dynamic_cache_update(
         self, dynamic_no_update_cache: DynamicNoUpdateCache, kv_states: list[KVState]
@@ -47,4 +47,4 @@ class TestDynamicNoUpdateCacheContract(KVCacheContractTests):
     ) -> None:
         # bypass the no-update behavior
         DynamicCache.update(dynamic_no_update_cache, kv_states)
-        return super().crop_test(dynamic_no_update_cache, num_tokens_crop)
+        super().crop_test(dynamic_no_update_cache, num_tokens_crop)

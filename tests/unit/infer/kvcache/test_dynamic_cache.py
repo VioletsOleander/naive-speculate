@@ -21,11 +21,11 @@ class TestDynamicCacheContract(KVCacheContractTests):
     def test_dynamic_cache_update(
         self, dynamic_cache: DynamicCache, kv_states: list[KVState]
     ) -> None:
-        return super().update_test(dynamic_cache, kv_states)
+        super().update_test(dynamic_cache, kv_states)
 
     @pytest.mark.parametrize("num_tokens_crop", NUM_TOKENS_CROP)
     def test_dynamic_cache_crop(
         self, dynamic_cache: DynamicCache, kv_states: list[KVState], num_tokens_crop: int
     ) -> None:
         dynamic_cache.update(kv_states)
-        return super().crop_test(dynamic_cache, num_tokens_crop)
+        super().crop_test(dynamic_cache, num_tokens_crop)

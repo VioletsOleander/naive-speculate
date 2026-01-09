@@ -21,14 +21,9 @@ _KVCACHE_SHAPES = [
 _NUM_LAYERS = [1, 2, 4]
 
 KVSTATES = [
-    [
-        KVState(
-            keys=torch.empty(shape),
-            values=torch.empty(shape),
-        )
-        for shape in _KVCACHE_SHAPES
-    ]
-    for _ in _NUM_LAYERS
+    [KVState(keys=torch.empty(shape), values=torch.empty(shape)) for _ in range(num_layer)]
+    for num_layer in _NUM_LAYERS
+    for shape in _KVCACHE_SHAPES
 ]
 
 NUM_TOKENS_CROP = [0, 2, 4]

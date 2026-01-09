@@ -32,7 +32,7 @@ class DynamicCache(KVCache, Sequence):
             return
 
         length = self.cache.get_seq_length(0)
-        if num_tokens_crop >= length:
+        if num_tokens_crop > length:
             raise ValueError(
                 f"Cannot crop {num_tokens_crop} tokens from cache with length {length}."
             )
