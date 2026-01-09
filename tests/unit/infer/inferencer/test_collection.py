@@ -57,7 +57,7 @@ class TestCollectionFind:
         Param(num_tokens=3, token_id=3, start_idx=0, expected_idx=-1),  # large token_id
     )
 
-    @pytest.mark.parametrize(("param"), PARAMS)
+    @pytest.mark.parametrize("param", PARAMS)
     def test_collection_find(
         self,
         param: Param,
