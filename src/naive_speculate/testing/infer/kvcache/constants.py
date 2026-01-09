@@ -12,18 +12,18 @@ class _KVCacheShape(NamedTuple):
     head_dim: int
 
 
-_KVCACHE_SHAPES = [
+_KVCACHE_SHAPES = (
     _KVCacheShape(batch_size=1, num_attention_heads=2, num_tokens=16, head_dim=8),
     _KVCacheShape(batch_size=2, num_attention_heads=2, num_tokens=8, head_dim=8),
     _KVCacheShape(batch_size=4, num_attention_heads=1, num_tokens=4, head_dim=8),
-]
+)
 
-_NUM_LAYERS = [1, 2, 4]
+_NUM_LAYERS = (1, 2, 4)
 
-KVSTATES = [
+KVSTATES = (
     [KVState(keys=torch.empty(shape), values=torch.empty(shape)) for _ in range(num_layer)]
     for num_layer in _NUM_LAYERS
     for shape in _KVCACHE_SHAPES
-]
+)
 
-NUM_TOKENS_CROP = [0, 2, 4]
+NUM_TOKENS_CROP = (0, 2, 4)

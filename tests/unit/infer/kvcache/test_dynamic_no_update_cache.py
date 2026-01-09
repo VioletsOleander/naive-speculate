@@ -6,7 +6,7 @@ from naive_speculate.infer.impl.kvcache.dynamic_no_update_cache import (
     DynamicCache,
     DynamicNoUpdateCache,
 )
-from naive_speculate.testing.infer.kvcache import KVSTATES, NUM_TOKENS_CROP, KVCacheContractTests
+from naive_speculate.testing.infer.kvcache import NUM_TOKENS_CROP, KVCacheContractTests
 
 if TYPE_CHECKING:
     from naive_speculate.infer import KVState
@@ -16,10 +16,6 @@ class TestDynamicNoUpdateCacheContract(KVCacheContractTests):
     @pytest.fixture
     def dynamic_no_update_cache(self) -> DynamicNoUpdateCache:
         return DynamicNoUpdateCache()
-
-    @pytest.fixture(params=KVSTATES)
-    def kv_states(self, request: pytest.FixtureRequest) -> list[KVState]:
-        return request.param
 
     @pytest.mark.xfail(reason="DynamicNoUpdateCache does not support updates", strict=True)
     def test_dynamic_cache_update_xfail(
