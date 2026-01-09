@@ -1,7 +1,6 @@
 import torch
 
 
-# TODO: find a more elegant way to support optional logits collection to save memory.
 class OutputCollection:
     """Container for model intermediate outputs during decode or prefill.
 
@@ -30,15 +29,13 @@ class OutputCollection:
         self._output_ids.append(output_ids)
         self._output_logits.append(output_logits)
 
-    def clear(self) -> None:
-        """Clear collected outputs."""
-        self._output_ids = []
-        self._output_logits = []
-
     def find(self, token_id: int, start_idx: int) -> int:
         """Find the first occurrence of a token id in the collected output ids, starting from `start_idx`.
 
-        Incur once device synchronization.
+        For `start_idx` which is out of bounds (i.e. less than 0 or greater than or equal to
+        the number of collected tokens), -1 is returned.
+
+        Incurs one device synchronization.
 
         Currently only reasonable for batch_size=1 scenarios.
 
@@ -50,14 +47,13 @@ class OutputCollection:
             int: The index of the first occurrence of the token id within the search length.
                 -1 if not found.
         """
-        if not self._output_ids or start_idx < 0:
+        if not self._output_ids or start_idx < 0 or start_idx >= len(self._output_ids):
             return -1
 
         tokens_to_search = self._output_ids[start_idx:]
         tokens_to_search = torch.cat(tokens_to_search, dim=1).squeeze(0).cpu()
 
         token_found, token_idx = torch.max((tokens_to_search == token_id), dim=0)
-
         if token_found.item():
             return start_idx + int(token_idx.item())
 

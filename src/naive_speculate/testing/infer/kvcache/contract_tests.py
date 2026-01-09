@@ -1,5 +1,9 @@
 from typing import TYPE_CHECKING
 
+import pytest
+
+from .constants import KVSTATES
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -7,6 +11,10 @@ if TYPE_CHECKING:
 
 
 class KVCacheContractTests:
+    @pytest.fixture(params=KVSTATES)
+    def kv_states(self, request: pytest.FixtureRequest) -> list[KVState]:
+        return request.param
+
     def update_test(self, kv_cache: KVCache, kv_states: Sequence[KVState]) -> None:
         num_tokens_new = kv_states[0].keys.size(-2)
 

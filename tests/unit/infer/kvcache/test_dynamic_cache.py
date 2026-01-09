@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from naive_speculate.infer.impl.kvcache.dynamic_cache import DynamicCache
-from naive_speculate.testing.infer.kvcache import KVSTATES, NUM_TOKENS_CROP, KVCacheContractTests
+from naive_speculate.testing.infer.kvcache import NUM_TOKENS_CROP, KVCacheContractTests
 
 if TYPE_CHECKING:
     from naive_speculate.infer import KVState
@@ -13,10 +13,6 @@ class TestDynamicCacheContract(KVCacheContractTests):
     @pytest.fixture
     def dynamic_cache(self) -> DynamicCache:
         return DynamicCache()
-
-    @pytest.fixture(params=KVSTATES)
-    def kv_states(self, request: pytest.FixtureRequest) -> list[KVState]:
-        return request.param
 
     def test_dynamic_cache_update(
         self, dynamic_cache: DynamicCache, kv_states: list[KVState]

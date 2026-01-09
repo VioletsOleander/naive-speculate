@@ -109,3 +109,6 @@ convention = "google"
 [tool.pylint."messages control"]
 disable = "all"
 enable = ["cyclic-import"]
+
+[tool.pytest]
+addopts = ["--import-mode=importlib"]
