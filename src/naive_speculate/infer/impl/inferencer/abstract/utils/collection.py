@@ -35,7 +35,7 @@ class OutputCollection:
         For `start_idx` which is out of bounds (i.e. less than 0 or greater than or equal to
         the number of collected tokens), -1 is returned.
 
-        Incur once device synchronization.
+        Incurs one device synchronization.
 
         Currently only reasonable for batch_size=1 scenarios.
 
