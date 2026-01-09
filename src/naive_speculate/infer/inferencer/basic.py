@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from typing import TYPE_CHECKING, override
 
 import torch
@@ -14,27 +13,28 @@ if TYPE_CHECKING:
 
     from naive_speculate.config.strategy import SampleStrategy
 
+    from .model import LanguageModel
+
 
 class BasicInferencer(InferencerProtocol):
-    """Basic Inferencer implements `prefill` and `decode` method of the `Inferencer` protocol.
+    """Basic Inferencer implements the `Inferencer` protocol.
 
-    BaseInferencer utilize `forward` method to provide simple implementations
-    for `prefill` and `decode` methods, and leave the concrete implementation
-    of `forward` to inheriting concrete classes.
+    BaseInferencer delegates the implementation of `forward` method to
+    `LanguageModel`, and utilizes it to provide simple implementations for
+    the `prefill` and `decode` methods.
 
-    BaseInferencer expects inheriting classes to implement the following abstract methods:
-    - `forward`: Forward with query token ids and return the computed logits.
-    - `_eos_token_id`: Return the EOS token id.
+    Attributes:
+        language_model (LanguageModel): The language model used for forwarding.
     """
 
-    @property
-    @abstractmethod
-    def _eos_token_id(self) -> int:
-        """Id of the end-of-sequence (EOS) token."""
-        ...
+    language_model: LanguageModel
 
-    @abstractmethod
-    def forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor: ...
+    def __init__(self, language_model: LanguageModel) -> None:
+        self.language_model = language_model
+
+    @override
+    def forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor:
+        return self.language_model.forward(query_token_ids=query_token_ids, kv_cache=kv_cache)
 
     @torch.no_grad()
     @override
@@ -81,7 +81,7 @@ class BasicInferencer(InferencerProtocol):
 
             # Check for EOS token in the newly generated tokens
             # currently only reasonable for batch_size=1
-            if (output_ids == self._eos_token_id).any().item():
+            if (output_ids == self.language_model.eos_token_id).any().item():
                 break
 
         return DecodeOutput._make(output_collection.finalize())

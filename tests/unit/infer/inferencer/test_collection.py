@@ -3,7 +3,7 @@ from typing import NamedTuple, Protocol
 import pytest
 import torch
 
-from naive_speculate.infer.impl.inferencer.abstract.utils.collection import OutputCollection
+from naive_speculate.infer.inferencer.utils.collection import OutputCollection
 
 
 class TensorShape(NamedTuple):

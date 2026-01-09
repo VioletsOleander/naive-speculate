@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple, override
+
+from naive_speculate.infer.inferencer.model import LanguageModel
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -26,7 +28,7 @@ class FakeModelConfig(NamedTuple):
     num_layers: int
 
 
-class ForwardResultInjection(NamedTuple):
+class FakeForwardResult(NamedTuple):
     """Pre-configured computation results for `FakeModel.forward`.
 
     Attributes:
@@ -38,7 +40,7 @@ class ForwardResultInjection(NamedTuple):
     kv_states: Sequence[KVState]
 
 
-class FakeModel:
+class FakeModel(LanguageModel):
     """A fake transformer model with causal lm head, implementing `eos_token_id` and `forward`.
 
     Attributes:
@@ -47,31 +49,23 @@ class FakeModel:
     """
 
     config: FakeModelConfig
-    forward_result: ForwardResultInjection | None
+    forward_result: FakeForwardResult | None
 
-    def __init__(
-        self,
-        config: FakeModelConfig,
-    ) -> None:
+    def __init__(self, config: FakeModelConfig) -> None:
         self.config = config
         self.forward_result = None
 
     @property
+    @override
     def eos_token_id(self) -> int:
         return self.config.eos_token_id
 
-    def forward(self, _query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor:
+    @override
+    def forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor:
         """Do a fake forward pass.
 
-        Return the pre-injected pre-configured logits the token logits,
+        Return the pre-injected logits the token logits,
         and update the `kv_cache` with pre-injected keys and values.
-
-        Args:
-            _query_token_ids (torch.Tensor): Token ids of shape `[batch_size, num_query_tokens]`.
-            kv_cache (KVCache): KVCache to be updated.
-
-        Returns:
-            torch.Tensor: The pre-configured logits to return.
 
         Raises:
             RuntimeError: If `forward_result` is not injected before calling `forward`.
@@ -82,10 +76,6 @@ class FakeModel:
         kv_cache.update(self.forward_result.kv_states)
         return self.forward_result.logits
 
-    def inject_forward_result(self, forward_result: ForwardResultInjection) -> None:
-        """Inject pre-configured computation results for `forward`.
-
-        Args:
-            forward_result (ForwardResultInjection): Pre-configured computation results.
-        """
+    def inject_forward_result(self, forward_result: FakeForwardResult) -> None:
+        """Inject pre-configured computation results for `forward`."""
         self.forward_result = forward_result
