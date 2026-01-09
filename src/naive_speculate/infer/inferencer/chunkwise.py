@@ -1,5 +1,4 @@
-from abc import abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import torch
 
@@ -12,28 +11,29 @@ if TYPE_CHECKING:
     from naive_speculate.config.strategy import SampleStrategy
     from naive_speculate.infer import KVCache
 
+    from .model import LanguageModel
+
 
 class ChunkwiseDecodeInferencer(BasicInferencer):
     """ChunkwiseDecodeInferencer implements chunk-wise decoding to reduce device synchronization overhead.
 
-    ChunkwiseDecodeInferencer only checks eos token after each `decode_chunk_size` iterations.
-
-    ChunkwiseDecodeInferencer expects inheriting classes to implement the following additional abstract methods:
-    - `decode_chunk_size`: Return the number of tokens to decode before checking for EOS token.
+    ChunkwiseDecodeInferencer only checks eos token after each `decode_chunk_size` iterations,
+    in order to reduce the device synchronization overhead caused by frequent eos token checking.
 
     Refers to base class `BaseInferencer` for more details.
+
+    Attributes:
+        decode_chunk_size (int): Number of tokens to decode before checking for EOS token.
     """
 
-    @property
-    @abstractmethod
-    def decode_chunk_size(self) -> int:
-        """Number of tokens to decode before checking for EOS token.
+    decode_chunk_size: int
 
-        Used as a simple trick to reduce device synchronization overhead.
-        """
-        ...
+    def __init__(self, language_model: LanguageModel, decode_chunk_size: int = 8) -> None:
+        super().__init__(language_model)
+        self.decode_chunk_size = decode_chunk_size
 
     @torch.no_grad()
+    @override
     def decode(
         self,
         query_token_ids: torch.Tensor,
@@ -71,7 +71,7 @@ class ChunkwiseDecodeInferencer(BasicInferencer):
 
             # 2. Check for EOS token existence in the last chunk
             eos_token_idx = output_collection.find(
-                self._eos_token_id, start_idx=num_new_tokens - decode_chunk_size
+                self.language_model.eos_token_id, start_idx=num_new_tokens - decode_chunk_size
             )
 
             if eos_token_idx != -1:

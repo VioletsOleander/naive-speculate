@@ -2,10 +2,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from naive_speculate.infer.impl.kvcache.dynamic_no_update_cache import (
-    DynamicCache,
-    DynamicNoUpdateCache,
-)
+from naive_speculate.infer.kvcache.dynamic_no_update_cache import DynamicCache, DynamicNoUpdateCache
 from naive_speculate.testing.infer.kvcache import NUM_TOKENS_CROP, KVCacheContractTests
 
 if TYPE_CHECKING:
