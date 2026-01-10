@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, cast, override
 
 from transformers import Qwen3ForCausalLM
 
-from naive_speculate.infer.kvcache.dynamic_no_update import DynamicCache
+from naive_speculate.infer.kvcache.dynamic import DynamicCache
 
 from .interface import LanguageModel
 
