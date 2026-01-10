@@ -1,8 +1,22 @@
-from typing import NamedTuple
+from itertools import product
+from typing import TYPE_CHECKING, NamedTuple
 
 import torch
 
 from naive_speculate.infer import KVState
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+__all__ = ["CROP_RATIOS", "KVSTATES"]
+
+CROP_RATIOS = (
+    -1.0,  # special value: crop one
+    0.0,  # no crop
+    0.25,
+    0.5,
+    1.0,  # crop all
+)
 
 
 class _KVCacheShape(NamedTuple):
@@ -20,10 +34,12 @@ _KVCACHE_SHAPES = (
 
 _NUM_LAYERS = (1, 2, 4)
 
-KVSTATES = (
-    [KVState(keys=torch.empty(shape), values=torch.empty(shape)) for _ in range(num_layer)]
-    for num_layer in _NUM_LAYERS
-    for shape in _KVCACHE_SHAPES
-)
 
-NUM_TOKENS_CROP = (0, 2, 4)
+def _gen_kvstates() -> Generator[list[KVState]]:
+    for num_layer, shape in product(_NUM_LAYERS, _KVCACHE_SHAPES):
+        yield [
+            KVState(keys=torch.empty(shape), values=torch.empty(shape)) for _ in range(num_layer)
+        ]
+
+
+KVSTATES = _gen_kvstates()

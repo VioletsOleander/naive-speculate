@@ -11,6 +11,12 @@ if TYPE_CHECKING:
 
 
 class KVCacheContractTests:
+    """Contract tests for `KVCache` implementations.
+
+    `KVCache` implementations should utilize utility functions defined
+    here to test whether they adhere to the expected behavior contracts.
+    """
+
     @pytest.fixture(params=KVSTATES)
     def kv_states(self, request: pytest.FixtureRequest) -> list[KVState]:
         return request.param

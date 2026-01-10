@@ -3,7 +3,9 @@ from typing import TYPE_CHECKING
 import pytest
 
 from naive_speculate.infer.kvcache.dynamic_no_update_cache import DynamicCache, DynamicNoUpdateCache
-from naive_speculate.testing.infer.kvcache import NUM_TOKENS_CROP, KVCacheContractTests
+from naive_speculate.testing.infer.kvcache.constants import CROP_RATIOS
+from naive_speculate.testing.infer.kvcache.contract import KVCacheContractTests
+from naive_speculate.testing.infer.kvcache.utils import get_num_tokens_crop
 
 if TYPE_CHECKING:
     from naive_speculate.infer import KVState
@@ -31,13 +33,17 @@ class TestDynamicNoUpdateCacheContract(KVCacheContractTests):
         num_tokens_after = dynamic_no_update_cache.get_num_tokens()
         assert num_tokens_before == num_tokens_after
 
-    @pytest.mark.parametrize("num_tokens_crop", NUM_TOKENS_CROP)
+    @pytest.mark.parametrize("crop_ratio", CROP_RATIOS)
     def test_dynamic_cache_crop(
         self,
         dynamic_no_update_cache: DynamicNoUpdateCache,
         kv_states: list[KVState],
-        num_tokens_crop: int,
+        crop_ratio: float,
     ) -> None:
         # bypass the no-update behavior
         DynamicCache.update(dynamic_no_update_cache, kv_states)
+
+        num_tokens = dynamic_no_update_cache.get_num_tokens()
+        num_tokens_crop = get_num_tokens_crop(num_tokens, crop_ratio)
+
         super().crop_test(dynamic_no_update_cache, num_tokens_crop)
