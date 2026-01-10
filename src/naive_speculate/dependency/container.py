@@ -6,7 +6,7 @@ from transformers import AutoTokenizer, PreTrainedTokenizerFast
 from naive_speculate.speculate import SpeculativeDecoder
 from naive_speculate.utils.tokenizer import Tokenizer
 
-from .make import make_drafter, make_inferencer, make_kvcache, make_scorer
+from .maker import make_drafter, make_inferencer, make_kvcache, make_scorer
 
 if TYPE_CHECKING:
     from naive_speculate.config.internal import SpeculateConfig
