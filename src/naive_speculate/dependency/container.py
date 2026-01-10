@@ -1,3 +1,5 @@
+"""Provide `DependencyContainer`, as dependency provider for speculative decoding components."""
+
 from functools import cached_property
 from typing import TYPE_CHECKING
 
@@ -10,6 +12,8 @@ from .maker import make_drafter, make_inferencer, make_kvcache, make_scorer
 
 if TYPE_CHECKING:
     from naive_speculate.config.internal import SpeculateConfig
+
+__all__ = ["DependencyContainer"]
 
 
 class DependencyContainer:

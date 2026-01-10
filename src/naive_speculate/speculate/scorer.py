@@ -1,9 +1,13 @@
-from typing import TYPE_CHECKING, NamedTuple, Protocol
+"""Define `Scorer`, implementing token scoring (logits computing) functionality."""
+
+from typing import TYPE_CHECKING, NamedTuple
+
+import torch
 
 if TYPE_CHECKING:
-    import torch
+    from naive_speculate.infer import Inferencer, KVCache
 
-    from naive_speculate.infer import KVCache
+__all__ = ["ScoreResult", "Scorer"]
 
 
 class ScoreResult(NamedTuple):
@@ -20,11 +24,10 @@ class ScoreResult(NamedTuple):
     token_logits: torch.Tensor
 
 
-class Scorer(Protocol):
+class Scorer:
     """Scorer is able to process given tokens and produce corresponding token logits (scores).
 
-    Scorer can either be itself a language model, or delegate the scoring to an underlying
-    language model.
+    Scorer delegates scoring to an `Inferencer` instance.
 
     Scorer only scores the given query tokens, and does not generate any new tokens even though
     the scores can be used to do so.
@@ -32,8 +35,17 @@ class Scorer(Protocol):
     In the context of speculative decoding, scoring is part of the verification process, where
     the speculative decoder will do speculative sampling based on the token logits produced
     by the scorer.
+
+    Attributes:
+            inferencer (Inferencer): The inferencer used for scoring.
     """
 
+    inferencer: Inferencer
+
+    def __init__(self, inferencer: Inferencer) -> None:
+        self.inferencer = inferencer
+
+    @torch.no_grad()
     def score(
         self,
         query_token_ids: torch.Tensor,
@@ -54,4 +66,5 @@ class Scorer(Protocol):
             ScoreResult: The scoring result containing token logits.
                 Shape `[batch_size, num_query_tokens, vocab_size]`.
         """
-        ...
+        token_logits = self.inferencer.forward(query_token_ids=query_token_ids, kv_cache=kv_cache)
+        return ScoreResult(token_logits=token_logits)

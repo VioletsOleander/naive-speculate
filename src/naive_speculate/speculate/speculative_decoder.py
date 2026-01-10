@@ -1,3 +1,5 @@
+"""Define `SpeculativeDecoder`, performing speculative decoding using a drafter and a scorer."""
+
 from typing import TYPE_CHECKING
 
 import torch
@@ -8,9 +10,12 @@ from .utils import greedy_match, speculative_sampling
 
 if TYPE_CHECKING:
     from naive_speculate.config.strategy import SampleStrategy
-    from naive_speculate.draft import Drafter
     from naive_speculate.infer import KVCache
-    from naive_speculate.score import Scorer
+
+    from .drafter import Drafter
+    from .scorer import Scorer
+
+__all__ = ["SpeculativeDecoder"]
 
 
 class SpeculativeDecoder:
