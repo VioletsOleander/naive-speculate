@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, override
 
-from .dynamic_cache import DynamicCache
+from .dynamic import DynamicCache
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

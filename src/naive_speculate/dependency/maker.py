@@ -51,9 +51,9 @@ def make_scorer(inferencer: Inferencer) -> Scorer:
 def make_kvcache(kvcache_type: KVCacheType) -> KVCache:
     match kvcache_type:
         case KVCacheType.DYNAMIC:
-            import naive_speculate.infer.kvcache.dynamic_cache as impl_module  # noqa: PLC0415
+            import naive_speculate.infer.kvcache.dynamic as impl_module  # noqa: PLC0415
         case KVCacheType.DYNAMIC_NO_UPDATE:
-            import naive_speculate.infer.kvcache.dynamic_no_update_cache as impl_module  # noqa: PLC0415
+            import naive_speculate.infer.kvcache.dynamic_no_update as impl_module  # noqa: PLC0415
 
     kvcache_class = impl_module.KVCacheImpl
     return kvcache_class()
