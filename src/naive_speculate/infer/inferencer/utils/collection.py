@@ -1,3 +1,5 @@
+__all__ = ["OutputCollection"]
+
 import torch
 
 

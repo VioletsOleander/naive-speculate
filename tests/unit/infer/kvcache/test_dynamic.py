@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from naive_speculate.infer.kvcache.dynamic_cache import DynamicCache
+from naive_speculate.infer.kvcache.dynamic import DynamicCache
 from naive_speculate.testing.infer.kvcache.constants import CROP_RATIOS
 from naive_speculate.testing.infer.kvcache.contract import KVCacheContractTests
 from naive_speculate.testing.infer.kvcache.utils import get_num_tokens_crop

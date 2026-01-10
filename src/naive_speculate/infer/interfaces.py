@@ -1,3 +1,7 @@
+"""Define `Inferencer`, `KVCache` interface, and related data structures."""
+
+__all__ = ["DecodeOutput", "Inferencer", "KVCache", "KVState", "PrefillOutput"]
+
 from typing import TYPE_CHECKING, NamedTuple, Protocol
 
 if TYPE_CHECKING:

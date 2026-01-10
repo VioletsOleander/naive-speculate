@@ -1,3 +1,5 @@
+"""Define `DynamicCache`, implementing `KVCache`."""
+
 from collections.abc import Sequence
 from typing import overload, override
 
@@ -5,6 +7,8 @@ import torch
 import transformers
 
 from naive_speculate.infer import KVCache, KVState
+
+__all__ = ["KVCacheImpl"]
 
 
 class DynamicCache(KVCache, Sequence):

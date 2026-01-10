@@ -1,3 +1,5 @@
+"""Define `BasicInferencer`, implementing `Inferencer`."""
+
 from typing import TYPE_CHECKING, override
 
 import torch
@@ -14,6 +16,8 @@ if TYPE_CHECKING:
     from naive_speculate.config.strategy import SampleStrategy
 
     from .model import LanguageModel
+
+__all__ = ["BasicInferencer"]
 
 
 class BasicInferencer(InferencerProtocol):

@@ -1,3 +1,5 @@
+"""Provide Qwen3 model implementation of `LanguageModel`."""
+
 from functools import cached_property
 from typing import TYPE_CHECKING, cast, override
 
@@ -11,6 +13,8 @@ if TYPE_CHECKING:
     import torch
 
     from naive_speculate.infer import KVCache
+
+__all__ = ["LanguageModelImpl"]
 
 
 class Qwen3Model(LanguageModel):

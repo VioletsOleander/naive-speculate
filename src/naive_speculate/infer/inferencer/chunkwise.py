@@ -1,3 +1,5 @@
+"""Define `ChunkwiseDecodeInferencer`, implementing `Inferencer` with chunk-wise decoding strategy."""
+
 from typing import TYPE_CHECKING, override
 
 import torch
@@ -12,6 +14,8 @@ if TYPE_CHECKING:
     from naive_speculate.infer import KVCache
 
     from .model import LanguageModel
+
+__all__ = ["ChunkwiseDecodeInferencer"]
 
 
 class ChunkwiseDecodeInferencer(BasicInferencer):
@@ -53,7 +57,9 @@ class ChunkwiseDecodeInferencer(BasicInferencer):
             return DecodeOutput._make(output_collection.finalize())
 
         stream = self._generation_stream(
-            query_token_ids=query_token_ids, kv_cache=kv_cache, sample_strategy=sample_strategy
+            query_token_ids=query_token_ids,
+            kv_cache=kv_cache,
+            sample_strategy=sample_strategy,
         )
 
         num_new_tokens = 0
@@ -71,7 +77,8 @@ class ChunkwiseDecodeInferencer(BasicInferencer):
 
             # 2. Check for EOS token existence in the last chunk
             eos_token_idx = output_collection.find(
-                self.language_model.eos_token_id, start_idx=num_new_tokens - decode_chunk_size
+                self.language_model.eos_token_id,
+                start_idx=num_new_tokens - decode_chunk_size,
             )
 
             if eos_token_idx != -1:
