@@ -1,9 +1,13 @@
+"""Define `LanguageModel` protocol."""
+
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     import torch
 
     from naive_speculate.infer import KVCache
+
+__all__ = ["LanguageModel"]
 
 
 class LanguageModel(Protocol):

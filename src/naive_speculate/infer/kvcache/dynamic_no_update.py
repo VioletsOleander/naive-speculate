@@ -1,11 +1,15 @@
+"""Define `DynamicNoUpdateCache`, implementing `KVCache` with no-op update behavior."""
+
 from typing import TYPE_CHECKING, override
 
-from .dynamic_cache import DynamicCache
+from .dynamic import DynamicCache
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from naive_speculate.infer import KVState
+
+__all__ = ["KVCacheImpl"]
 
 
 class DynamicNoUpdateCache(DynamicCache):

@@ -1,9 +1,11 @@
+"""Provide Qwen3 model implementation of `LanguageModel`."""
+
 from functools import cached_property
 from typing import TYPE_CHECKING, cast, override
 
 from transformers import Qwen3ForCausalLM
 
-from naive_speculate.infer.kvcache.dynamic_no_update_cache import DynamicCache
+from naive_speculate.infer.kvcache.dynamic import DynamicCache
 
 from .interface import LanguageModel
 
@@ -11,6 +13,8 @@ if TYPE_CHECKING:
     import torch
 
     from naive_speculate.infer import KVCache
+
+__all__ = ["LanguageModelImpl"]
 
 
 class Qwen3Model(LanguageModel):
