@@ -1,4 +1,8 @@
+"""Provide `speculative_sampling` and `greedy_match` utility functions."""
+
 import torch
+
+__all__ = ["greedy_match", "speculative_sampling"]
 
 
 def _indexing_or_mask(tensor: torch.Tensor, idx: torch.Tensor) -> torch.Tensor:

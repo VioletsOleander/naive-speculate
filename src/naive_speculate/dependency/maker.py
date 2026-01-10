@@ -1,11 +1,15 @@
+"""Provide factory functions to conduct creation of various components."""
+
 from typing import TYPE_CHECKING
 
 from naive_speculate.config.registry import InferencerType, KVCacheType, ModelFamily
+from naive_speculate.speculate.drafter import Drafter
+from naive_speculate.speculate.scorer import Scorer
 
 if TYPE_CHECKING:
-    from naive_speculate.draft import Drafter
     from naive_speculate.infer import Inferencer, KVCache
-    from naive_speculate.score import Scorer
+
+__all__ = ["make_drafter", "make_inferencer", "make_kvcache", "make_scorer"]
 
 
 def make_inferencer(model_name: str, inferencer_type: InferencerType) -> Inferencer:
@@ -35,17 +39,11 @@ def make_inferencer(model_name: str, inferencer_type: InferencerType) -> Inferen
 
 
 def make_drafter(inferencer: Inferencer) -> Drafter:
-    import naive_speculate.draft.impl.drafter as impl_module  # noqa: PLC0415
-
-    drafter_class = impl_module.DrafterImpl
-    return drafter_class(inferencer=inferencer)
+    return Drafter(inferencer=inferencer)
 
 
 def make_scorer(inferencer: Inferencer) -> Scorer:
-    import naive_speculate.score.impl.scorer as impl_module  # noqa: PLC0415
-
-    scorer_class = impl_module.ScorerImpl
-    return scorer_class(inferencer=inferencer)
+    return Scorer(inferencer=inferencer)
 
 
 def make_kvcache(kvcache_type: KVCacheType) -> KVCache:

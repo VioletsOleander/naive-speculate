@@ -2,9 +2,8 @@
 
 Exports:
     SpeculativeDecoder: Entry class for speculative decoding.
-    VerifyStrategy: Enum for verification strategies.
 """
 
-from .speculative_decoder import SpeculativeDecoder, VerifyStrategy
+from .speculative_decoder import SpeculativeDecoder
 
-__all__ = ["SpeculativeDecoder", "VerifyStrategy"]
+__all__ = ["SpeculativeDecoder"]
