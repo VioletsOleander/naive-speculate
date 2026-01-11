@@ -16,6 +16,18 @@ dependencies = [
 [project.scripts]
 spec = "naive_speculate:main"
 
+# In github actions, use --extra cpu to avoid installing cuda related packages
+# because the runners do not have nvidia gpus
+#
+# cu128 dependency here serves just a preventer for installing both cpu and cu128 extras simultaneously
+# when accdentially using --all-extra
+#
+# since by now in PyPI, torch default provide cu128 builds for linux platform,
+# so using --extra cu128 is equivalent to not using any extra at all on linux platform
+[project.optional-dependencies]
+cpu = ["torch>=2.9.1"]
+cu128 = ["torch>=2.9.1"]
+
 [build-system]
 requires = ["uv_build>=0.9.10,<0.10.0"]
 build-backend = "uv_build"
@@ -29,6 +41,22 @@ dev = [
     "pytest-repeat>=0.9.4",
     "zensical>=0.0.15",
 ]
+
+[tool.uv]
+conflicts = [[{ extra = "cpu" }, { extra = "cu128" }]]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", extra = "cpu" }, { index = "pytorch-cu128", extra = "cu128" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
 
 [tool.ruff]
 line-length = 100
