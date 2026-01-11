@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from naive_speculate.infer import KVCache, LanguageModel
 
 
-__all__ = ["ChunkwiseDecodeInferencer"]
+__all__ = ["ChunkwiseDecodeInferencer", "InferencerImpl"]
 
 
 class ChunkwiseDecodeInferencer(BasicInferencer):
@@ -87,3 +87,6 @@ class ChunkwiseDecodeInferencer(BasicInferencer):
                 )
 
         return DecodeOutput._make(output_collection.finalize())
+
+
+InferencerImpl = ChunkwiseDecodeInferencer

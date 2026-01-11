@@ -2,22 +2,28 @@
 
 from enum import StrEnum, auto
 
+__all__ = ["InferencerType", "KVCacheType", "LanguageModelType"]
 
-class ModelFamily(StrEnum):
-    """Supported model families."""
+
+class LanguageModelType(StrEnum):
+    """Implemented `LanguageModel` types.
+
+    Each type corresponds to a specific model family.
+    (Currently only Qwen3 is supported.)
+    """
 
     QWEN3 = auto()
 
 
 class InferencerType(StrEnum):
-    """Implemented inferencer types."""
+    """Implemented `Inferencer` types."""
 
     BASIC = auto()
     CHUNKWISE = auto()
 
 
 class KVCacheType(StrEnum):
-    """Implemented KV cache types."""
+    """Implemented `KVCache` types."""
 
     DYNAMIC = auto()
     DYNAMIC_NO_UPDATE = auto()

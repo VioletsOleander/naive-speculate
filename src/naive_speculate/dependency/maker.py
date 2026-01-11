@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from naive_speculate.config.registry import InferencerType, KVCacheType, ModelFamily
+from naive_speculate.config.registry import InferencerType, KVCacheType, LanguageModelType
 from naive_speculate.speculate.drafter import Drafter
 from naive_speculate.speculate.scorer import Scorer
 
@@ -14,8 +14,8 @@ __all__ = ["make_drafter", "make_inferencer", "make_kvcache", "make_lm", "make_s
 
 def make_lm(model_name: str) -> LanguageModel:
     family_name = model_name.split("/")[0].upper()
-    match ModelFamily[family_name]:
-        case ModelFamily.QWEN3:
+    match LanguageModelType[family_name]:
+        case LanguageModelType.QWEN3:
             import naive_speculate.infer.lm.qwen3 as impl_module  # noqa: PLC0415
 
     lm_class = impl_module.LanguageModelImpl
@@ -25,16 +25,11 @@ def make_lm(model_name: str) -> LanguageModel:
 def make_inferencer(language_model: LanguageModel, inferencer_type: InferencerType) -> Inferencer:
     match inferencer_type:
         case InferencerType.BASIC:
-            from naive_speculate.infer.inferencer.basic import BasicInferencer  # noqa: PLC0415
-
-            inferencer_class = BasicInferencer
+            import naive_speculate.infer.inferencer.basic as impl_module  # noqa: PLC0415
         case InferencerType.CHUNKWISE:
-            from naive_speculate.infer.inferencer.chunkwise import (  # noqa: PLC0415
-                ChunkwiseDecodeInferencer,
-            )
+            import naive_speculate.infer.inferencer.chunkwise as impl_module  # noqa: PLC0415
 
-            inferencer_class = ChunkwiseDecodeInferencer
-
+    inferencer_class = impl_module.InferencerImpl
     return inferencer_class(language_model=language_model)
 
 

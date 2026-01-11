@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
     from naive_speculate.infer import KVState
 
-__all__ = ["KVCacheImpl"]
+__all__ = ["DynamicNoUpdateCache", "KVCacheImpl"]
 
 
 class DynamicNoUpdateCache(DynamicCache):

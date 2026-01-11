@@ -8,7 +8,7 @@ import transformers
 
 from naive_speculate.infer import KVCache, KVState
 
-__all__ = ["KVCacheImpl"]
+__all__ = ["DynamicCache", "KVCacheImpl"]
 
 
 class DynamicCache(KVCache, Sequence):

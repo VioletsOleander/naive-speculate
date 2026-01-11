@@ -1,6 +1,10 @@
+"""Provide `load_config`."""
+
 from .external import UserSpeculateConfig
 from .internal import DraftConfig, InferenceConfig, SpeculateConfig, VerifyConfig
 from .registry import InferencerType, KVCacheType
+
+__all__ = ["load_config"]
 
 
 def load_config(config_path: str) -> SpeculateConfig:
