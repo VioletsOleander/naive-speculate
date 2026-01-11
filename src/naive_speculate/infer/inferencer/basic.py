@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from naive_speculate.config.strategy import SampleStrategy
     from naive_speculate.infer import LanguageModel
 
-__all__ = ["BasicInferencer"]
+__all__ = ["BasicInferencer", "InferencerImpl"]
 
 
 class BasicInferencer(InferencerProtocol):
@@ -120,3 +120,6 @@ class BasicInferencer(InferencerProtocol):
             query_token_ids = next_token_ids
 
             yield next_token_ids, token_logits
+
+
+InferencerImpl = BasicInferencer

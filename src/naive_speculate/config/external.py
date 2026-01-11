@@ -6,17 +6,19 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, Field
 
-from .registry import ModelFamily
+from .registry import LanguageModelType
 from .strategy import SampleStrategy, VerifyStrategy
 
+__all__ = ["UserDraftConfig", "UserSpeculateConfig", "UserVerifyConfig"]
 
-def _is_supported_model_family(model_name: str) -> str:
-    """Check if the given model name belongs to a supported model family."""
+
+def _is_supported_lm_family(model_name: str) -> str:
+    """Check if the given model name belongs to a supported language model family."""
     family_name = model_name.split("/")[0].upper()
-    if family_name not in ModelFamily.__members__:
+    if family_name not in LanguageModelType:
         raise ValueError(
-            f"Model family '{family_name.capitalize()}' is not supported. "
-            f"Supported families are: {[e.name.capitalize() for e in ModelFamily]}."
+            f"Language model family '{family_name.capitalize()}' is not supported. "
+            f"Supported families are: {[e.name.capitalize() for e in LanguageModelType]}."
         )
     return model_name
 
@@ -35,7 +37,7 @@ class UserDraftConfig(BaseModel):
             Default to `5`.
     """
 
-    model_name: Annotated[str, AfterValidator(_is_supported_model_family)]
+    model_name: Annotated[str, AfterValidator(_is_supported_lm_family)]
     sample_strategy: SampleStrategy = SampleStrategy.RANDOM
     num_draft_tokens: int = Field(default=5, gt=0)
 
@@ -51,7 +53,7 @@ class UserVerifyConfig(BaseModel):
             Default to `VerifyStrategy.SPECULATIVE_SAMPLING`.
     """
 
-    model_name: Annotated[str, AfterValidator(_is_supported_model_family)]
+    model_name: Annotated[str, AfterValidator(_is_supported_lm_family)]
     verify_strategy: VerifyStrategy = VerifyStrategy.SPECULATIVE_SAMPLING
 
 

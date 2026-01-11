@@ -1,4 +1,8 @@
+"""Provide `SampleStrategy` and `VerifyStrategy` for token generation and verification."""
+
 from enum import StrEnum, auto
+
+__all__ = ["SampleStrategy", "VerifyStrategy"]
 
 
 class SampleStrategy(StrEnum):
