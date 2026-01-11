@@ -1,11 +1,11 @@
-"""Define `LanguageModel` protocol."""
+"""Define `LanguageModel`."""
 
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     import torch
 
-    from naive_speculate.infer import KVCache
+    from .kvcache import KVCache
 
 __all__ = ["LanguageModel"]
 
@@ -29,17 +29,23 @@ class LanguageModel(Protocol):
         ...
 
     def forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor:
-        """Execute forward computation with given token ids and kv cache.
+        """Forward the `query_token_ids` with given `kv_cache`.
 
-        KV cache will be updated internally with the newly computed key and value tensors.
+        Expect `kv_cache` to contain the key and value tensors for all tokens preceding
+        the query tokens.
 
-        Args:
-            query_token_ids (torch.Tensor): Input token ids of shape `[batch_size, num_query_tokens]`.
-            kv_cache (KVCache): Key value tensors of all past tokens.
+        `kv_cache` will be updated internally with the newly computed key and value tensors,
+        i.e. the key and value tensors corresponding to the query tokens.
+        (Currently, I think it simplifies the implementation, but also makes this invocation
+        not purely functional, further consideration may be needed in the future.)
 
         Return the logits at every query token positions, where position `i` gives the logits
         for sampling the token at position `i+1`.
         The shape of output logits is `[batch_size, num_query_tokens, vocab_size]`.
+
+        Args:
+            query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, num_query_tokens]`.
+            kv_cache (KVCache): Contains the key value tensors of past tokens.
 
         Returns:
             torch.Tensor: Logits of shape `[batch_size, num_query_tokens, vocab_size]`.

@@ -5,9 +5,8 @@ from typing import TYPE_CHECKING, cast, override
 
 from transformers import Qwen3ForCausalLM
 
+from naive_speculate.infer import LanguageModel
 from naive_speculate.infer.kvcache.dynamic import DynamicCache
-
-from .interface import LanguageModel
 
 if TYPE_CHECKING:
     import torch

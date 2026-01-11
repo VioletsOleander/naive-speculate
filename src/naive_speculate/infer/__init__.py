@@ -1,19 +1,21 @@
 """Inference basis support for speculative decoding.
 
 Exports:
-    DecodeOutput: Output structure for decoding steps.
+    LanguageModel: Interface for language models.
     Inferencer: Interface for inference engines.
-    KVCache: Key-Value cache interface for storing intermediate states.
-    KVState: Key-Value tensor in a single transformer layer.
-    PrefillOutput: Output structure for prefill steps.
+    PrefillOutput: Data structure for output from prefill operations.
+    DecodeOutput: Data structure for output from decoding operations.
+    KVCache: Interface for key-value cache used in transformer models.
+    KVState: Data structure for the state of the key-value cache.
 """
 
-from .interfaces import DecodeOutput, Inferencer, KVCache, KVState, PrefillOutput
+from .interface import DecodeOutput, Inferencer, KVCache, KVState, LanguageModel, PrefillOutput
 
 __all__ = [
     "DecodeOutput",
     "Inferencer",
     "KVCache",
     "KVState",
+    "LanguageModel",
     "PrefillOutput",
 ]

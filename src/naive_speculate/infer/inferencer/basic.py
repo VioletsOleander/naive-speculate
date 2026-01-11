@@ -14,8 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from naive_speculate.config.strategy import SampleStrategy
-
-    from .model import LanguageModel
+    from naive_speculate.infer import LanguageModel
 
 __all__ = ["BasicInferencer"]
 
@@ -23,9 +22,8 @@ __all__ = ["BasicInferencer"]
 class BasicInferencer(InferencerProtocol):
     """Basic Inferencer implements the `Inferencer` protocol.
 
-    BaseInferencer delegates the implementation of `forward` method to
-    `LanguageModel`, and utilizes it to provide simple implementations for
-    the `prefill` and `decode` methods.
+    BasicInferencer delegates the forward computation to `LanguageModel`,
+    and utilizes it to provide simple implementations for the `prefill` and `decode` methods.
 
     Attributes:
         language_model (LanguageModel): The language model used for forwarding.
@@ -35,10 +33,6 @@ class BasicInferencer(InferencerProtocol):
 
     def __init__(self, language_model: LanguageModel) -> None:
         self.language_model = language_model
-
-    @override
-    def forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor:
-        return self.language_model.forward(query_token_ids=query_token_ids, kv_cache=kv_cache)
 
     @torch.no_grad()
     @override
@@ -116,7 +110,7 @@ class BasicInferencer(InferencerProtocol):
         """
         while True:
             # 1. Forward
-            token_logits = self.forward(query_token_ids, kv_cache)
+            token_logits = self.language_model.forward(query_token_ids, kv_cache)
 
             # 2. Sample
             next_token_logits = token_logits[:, -1].to(dtype=torch.float32, copy=True)
