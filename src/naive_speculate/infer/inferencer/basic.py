@@ -22,7 +22,7 @@ __all__ = ["BasicInferencer"]
 class BasicInferencer(InferencerProtocol):
     """Basic Inferencer implements the `Inferencer` protocol.
 
-    BaseInferencer delegates the forward computation to `LanguageModel`,
+    BasicInferencer delegates the forward computation to `LanguageModel`,
     and utilizes it to provide simple implementations for the `prefill` and `decode` methods.
 
     Attributes:

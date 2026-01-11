@@ -27,7 +27,7 @@ class ScoreResult(NamedTuple):
 class Scorer:
     """Scorer is able to process given tokens and produce corresponding token logits (scores).
 
-    Scorer delegates scoring to an `LanguageModel` instance.
+    Scorer delegates scoring to a `LanguageModel` instance.
 
     Scorer only scores the given query tokens, and does not generate any new tokens even though
     the scores can be used to do so.
