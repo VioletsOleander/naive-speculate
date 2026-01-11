@@ -20,7 +20,7 @@ spec = "naive_speculate:main"
 # because the runners do not have nvidia gpus
 #
 # cu128 dependency here serves just a preventer for installing both cpu and cu128 extras simultaneously
-# when accdentially using --all-extra
+# when accidentally using --all-extra
 #
 # since by now in PyPI, torch default provide cu128 builds for linux platform,
 # so using --extra cu128 is equivalent to not using any extra at all on linux platform
