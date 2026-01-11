@@ -1,4 +1,4 @@
-"""Provide `FakeLanguageModel` and related configuration, forward result injection classes."""
+"""Provide `FakeLanguageModel` and its configuration `FakeLMConfig`."""
 
 from typing import TYPE_CHECKING, NamedTuple, override
 
