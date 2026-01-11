@@ -19,7 +19,7 @@ spec = "naive_speculate:main"
 # In github actions, use --extra cpu to avoid installing cuda related packages
 # because the runners do not have nvidia gpus
 #
-# cu128 dependency here serves just a preventer for installing both cpu and cu128 extras simultaneously
+# cu128 dependency here serves just as a preventer for installing both cpu and cu128 extras simultaneously
 # when accidentally using --all-extra
 #
 # since by now in PyPI, torch default provide cu128 builds for linux platform,
