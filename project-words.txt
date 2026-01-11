@@ -5,6 +5,7 @@ Blockquotes
 chunkwise
 Chunkwise
 EDITMSG
+finfo
 fontawesome
 huggingface
 huggingface's

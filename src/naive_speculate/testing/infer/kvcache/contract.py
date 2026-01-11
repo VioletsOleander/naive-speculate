@@ -15,13 +15,17 @@ __all__ = ["KVCacheContractTests"]
 class KVCacheContractTests:
     """Contract tests for `KVCache` implementations.
 
-    `KVCache` implementations should utilize utility functions defined
+    Provide test utility methods corresponding to the methods of `KVCache`,
+    and a fixture for `KVState` sequences.
+
+    `KVCache` implementations should utilize utility methods defined
     here to test whether they adhere to the expected behavior contracts.
     """
 
     @pytest.fixture(params=KVSTATES)
     def kv_states(self, request: pytest.FixtureRequest) -> list[KVState]:
-        return request.param
+        kv_states: list[KVState] = request.param
+        return kv_states
 
     def update_test(self, kv_cache: KVCache, kv_states: Sequence[KVState]) -> None:
         num_tokens_new = kv_states[0].keys.size(-2)

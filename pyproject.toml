@@ -111,4 +111,4 @@ disable = "all"
 enable = ["cyclic-import"]
 
 [tool.pytest]
-addopts = ["--import-mode=importlib"]
+addopts = ["--import-mode=importlib", "-s"]
