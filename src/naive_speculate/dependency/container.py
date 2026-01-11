@@ -8,7 +8,7 @@ from transformers import AutoTokenizer, PreTrainedTokenizerFast
 from naive_speculate.speculate import SpeculativeDecoder
 from naive_speculate.utils.tokenizer import Tokenizer
 
-from .maker import make_drafter, make_inferencer, make_kvcache, make_scorer
+from .maker import make_drafter, make_inferencer, make_kvcache, make_lm, make_scorer
 
 if TYPE_CHECKING:
     from naive_speculate.config.internal import SpeculateConfig
@@ -39,17 +39,15 @@ class DependencyContainer:
     @cached_property
     def speculative_decoder(self) -> SpeculativeDecoder:
         """The initialized speculative decoder instance."""
+        draft_lm = make_lm(model_name=self.config.draft.infer.model_name)
         draft_inferencer = make_inferencer(
-            model_name=self.config.draft.infer.model_name,
+            language_model=draft_lm,
             inferencer_type=self.config.draft.infer.inferencer_type,
         )
         drafter = make_drafter(inferencer=draft_inferencer)
 
-        score_inferencer = make_inferencer(
-            model_name=self.config.verify.infer.model_name,
-            inferencer_type=self.config.verify.infer.inferencer_type,
-        )
-        scorer = make_scorer(inferencer=score_inferencer)
+        score_lm = make_lm(model_name=self.config.verify.infer.model_name)
+        scorer = make_scorer(language_model=score_lm)
 
         drafter_kvcache = make_kvcache(kvcache_type=self.config.draft.infer.kvcache_type)
         scorer_kvcache = make_kvcache(kvcache_type=self.config.verify.infer.kvcache_type)

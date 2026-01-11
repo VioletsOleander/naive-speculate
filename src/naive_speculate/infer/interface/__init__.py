@@ -1,4 +1,4 @@
-"""Inference basis support for speculative decoding.
+"""Interfaces for inference components.
 
 Exports:
     LanguageModel: Interface for language models.
@@ -9,7 +9,9 @@ Exports:
     KVState: Interface for the state of the key-value cache.
 """
 
-from .interface import DecodeOutput, Inferencer, KVCache, KVState, LanguageModel, PrefillOutput
+from .inferencer import DecodeOutput, Inferencer, PrefillOutput
+from .kvcache import KVCache, KVState
+from .lm import LanguageModel
 
 __all__ = [
     "DecodeOutput",

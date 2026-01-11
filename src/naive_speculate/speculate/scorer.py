@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, NamedTuple
 import torch
 
 if TYPE_CHECKING:
-    from naive_speculate.infer import Inferencer, KVCache
+    from naive_speculate.infer import KVCache, LanguageModel
 
 __all__ = ["ScoreResult", "Scorer"]
 
@@ -27,7 +27,7 @@ class ScoreResult(NamedTuple):
 class Scorer:
     """Scorer is able to process given tokens and produce corresponding token logits (scores).
 
-    Scorer delegates scoring to an `Inferencer` instance.
+    Scorer delegates scoring to an `LanguageModel` instance.
 
     Scorer only scores the given query tokens, and does not generate any new tokens even though
     the scores can be used to do so.
@@ -37,13 +37,13 @@ class Scorer:
     by the scorer.
 
     Attributes:
-            inferencer (Inferencer): The inferencer used for scoring.
+        language_model (LanguageModel): The language model used for scoring.
     """
 
-    inferencer: Inferencer
+    language_model: LanguageModel
 
-    def __init__(self, inferencer: Inferencer) -> None:
-        self.inferencer = inferencer
+    def __init__(self, language_model: LanguageModel) -> None:
+        self.language_model = language_model
 
     @torch.no_grad()
     def score(
@@ -66,5 +66,7 @@ class Scorer:
             ScoreResult: The scoring result containing token logits.
                 Shape `[batch_size, num_query_tokens, vocab_size]`.
         """
-        token_logits = self.inferencer.forward(query_token_ids=query_token_ids, kv_cache=kv_cache)
+        token_logits = self.language_model.forward(
+            query_token_ids=query_token_ids, kv_cache=kv_cache
+        )
         return ScoreResult(token_logits=token_logits)

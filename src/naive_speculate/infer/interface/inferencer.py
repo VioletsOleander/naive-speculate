@@ -1,15 +1,15 @@
-"""Define `Inferencer`, `KVCache` interface, and related data structures."""
-
-__all__ = ["DecodeOutput", "Inferencer", "KVCache", "KVState", "PrefillOutput"]
+"""Define `Inferencer`, `PrefillOutput` and `DecodeOutput`."""
 
 from typing import TYPE_CHECKING, NamedTuple, Protocol
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     import torch
 
     from naive_speculate.config.strategy import SampleStrategy
+
+    from .kvcache import KVCache
+
+__all__ = ["DecodeOutput", "Inferencer", "PrefillOutput"]
 
 
 class PrefillOutput(NamedTuple):
@@ -23,21 +23,6 @@ class PrefillOutput(NamedTuple):
 
     token_ids: torch.Tensor
     token_logits: torch.Tensor
-
-
-class KVState(NamedTuple):
-    """Keys and values tensor for a single transformer layer.
-
-    The shape of `keys` and `values` are
-    `[batch_size, num_attention_heads, num_tokens, head_dim]`.
-
-    Attributes:
-        keys (torch.Tensor): The keys tensor.
-        values (torch.Tensor): The values tensor.
-    """
-
-    keys: torch.Tensor
-    values: torch.Tensor
 
 
 class DecodeOutput(NamedTuple):
@@ -54,41 +39,6 @@ class DecodeOutput(NamedTuple):
     token_logits: torch.Tensor
 
 
-class KVCache(Protocol):
-    """Stores layerwise key and value tensors, which are used by an Inferencer during inference."""
-
-    def update(self, kv_states: Sequence[KVState]) -> None:
-        """Update the storage with new key and value tensors.
-
-        The length of `kv_states` should be equal to the number of transformer layers,
-        and each `KVState` contains the new key and value tensors for the corresponding layer.
-
-        All key and value tensors in `kv_states` should have the same shape.
-
-        Args:
-            kv_states (Sequence[KVState]): New key and value tensors for each transformer layer.
-        """
-        ...
-
-    def crop(self, num_tokens_crop: int) -> None:
-        """Crop the latest `num_tokens_crop` tokens from the cache.
-
-        `num_tokens_crop` should be non-negative and not exceed the current number of tokens in the cache.
-
-        Args:
-            num_tokens_crop (int): Number of latest tokens to crop from the cache.
-        """
-        ...
-
-    def get_num_tokens(self) -> int:
-        """Get the current number of tokens stored in the cache.
-
-        Returns:
-            int: Current number of tokens in the cache.
-        """
-        ...
-
-
 class Inferencer(Protocol):
     """Inferencer is able to process token sequences and generate new tokens.
 
@@ -100,30 +50,6 @@ class Inferencer(Protocol):
 
     Inferencer will update the KVCache internally when processing the query tokens.
     """
-
-    def forward(self, query_token_ids: torch.Tensor, kv_cache: KVCache) -> torch.Tensor:
-        """Forward the `query_token_ids` with given `kv_cache`.
-
-        Expect `kv_cache` to contain the key and value tensors for all tokens preceding
-        the query tokens.
-
-        `kv_cache` will be updated internally with the newly computed key and value tensors,
-        i.e. the key and value tensors corresponding to the query tokens.
-        (Currently, I think it simplifies the implementation, but also makes this invocation
-        not purely functional, further consideration may be needed in the future.)
-
-        Return the logits at every query token positions, where position `i` gives the logits
-        for sampling the token at position `i+1`.
-        The shape of output logits is `[batch_size, num_query_tokens, vocab_size]`.
-
-        Args:
-            query_token_ids (torch.Tensor): Query token ids of shape `[batch_size, num_query_tokens]`.
-            kv_cache (KVCache): Contains the key value tensors of past tokens.
-
-        Returns:
-            torch.Tensor: Logits of shape `[batch_size, num_query_tokens, vocab_size]`.
-        """
-        ...
 
     def prefill(
         self, query_token_ids: torch.Tensor, kv_cache: KVCache, sample_strategy: SampleStrategy

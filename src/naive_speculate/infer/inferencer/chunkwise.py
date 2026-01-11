@@ -11,9 +11,8 @@ from .utils.collection import OutputCollection
 
 if TYPE_CHECKING:
     from naive_speculate.config.strategy import SampleStrategy
-    from naive_speculate.infer import KVCache
+    from naive_speculate.infer import KVCache, LanguageModel
 
-    from .model import LanguageModel
 
 __all__ = ["ChunkwiseDecodeInferencer"]
 
