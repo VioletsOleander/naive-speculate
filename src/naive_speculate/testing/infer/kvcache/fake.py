@@ -1,3 +1,5 @@
+"""Provide `FakeKVCache`, implementation of `KVCache`."""
+
 from typing import TYPE_CHECKING
 
 from naive_speculate.infer import KVCache, KVState
