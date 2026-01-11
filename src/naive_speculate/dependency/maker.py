@@ -13,7 +13,7 @@ __all__ = ["make_drafter", "make_inferencer", "make_kvcache", "make_lm", "make_s
 
 
 def make_lm(model_name: str) -> LanguageModel:
-    family_name = model_name.split("/")[0].upper()
+    family_name = model_name.split("/")[0].lower()
     match LanguageModelType[family_name]:
         case LanguageModelType.QWEN3:
             import naive_speculate.infer.lm.qwen3 as impl_module  # noqa: PLC0415
