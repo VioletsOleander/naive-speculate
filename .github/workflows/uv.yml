@@ -27,7 +27,7 @@ jobs:
         run: uv sync --locked --extra cpu --dev
 
       - name: ty check
-        run: uvx ty check
+        run: uv run ty check
 
       - name: pylint check
-        run: uvx pylint src
+        run: uv run pylint src
