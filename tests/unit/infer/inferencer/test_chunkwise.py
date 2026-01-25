@@ -12,6 +12,11 @@ if TYPE_CHECKING:
     from naive_speculate.testing.infer.inferencer.scenario import InferenceScenario
 
 
+@pytest.fixture(params=[1, 2, 4, 8])
+def decode_chunk_size(request: pytest.FixtureRequest) -> int:
+    return request.param
+
+
 class TestChunkwiseDecodeInferencer(InferencerContractTests, InferenceScenarioFixtures):
     def test_prefill(self, scenario: InferenceScenario, sample_strategy: SampleStrategy) -> None:
         chunkwise_inferencer = ChunkwiseDecodeInferencer(language_model=scenario.fake_lm)
@@ -24,9 +29,15 @@ class TestChunkwiseDecodeInferencer(InferencerContractTests, InferenceScenarioFi
 
     @pytest.mark.parametrize("max_new_tokens", MAX_NEW_TOKENS)
     def test_decode(
-        self, scenario: InferenceScenario, max_new_tokens: int, sample_strategy: SampleStrategy
+        self,
+        scenario: InferenceScenario,
+        max_new_tokens: int,
+        sample_strategy: SampleStrategy,
+        decode_chunk_size: int,
     ) -> None:
-        chunkwise_inferencer = ChunkwiseDecodeInferencer(language_model=scenario.fake_lm)
+        chunkwise_inferencer = ChunkwiseDecodeInferencer(
+            language_model=scenario.fake_lm, decode_chunk_size=decode_chunk_size
+        )
         super().decode_test(
             inferencer=chunkwise_inferencer,
             query_token_ids=scenario.query_token_ids,
