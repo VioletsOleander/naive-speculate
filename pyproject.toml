@@ -35,6 +35,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "docstring-parser>=0.17.0",
+    "import-linter>=2.9",
     "mkdocstrings-python>=2.0.1",
     "pylint>=4.0.4",
     "pytest>=9.0.1",
@@ -136,9 +137,15 @@ convention = "google"
 # allow using asserts in testing module
 "src/naive_speculate/testing/**" = ["S101"]
 
-[tool.pylint."messages control"]
-disable = "all"
-enable = ["cyclic-import"]
+[tool.importlinter]
+root_package = "naive_speculate"
+include_external_packages = true
+exclude_type_checking_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Acyclic Imports"
+type = "acyclic_siblings"
+ancestors = ["naive_speculate"]
 
 [tool.pytest]
 addopts = ["--import-mode=importlib", "-s"]

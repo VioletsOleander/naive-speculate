@@ -29,8 +29,5 @@ jobs:
       - name: ty check
         run: uv run --no-sync ty check
 
-      - name: pylint check
-        run: uv run --no-sync pylint -j 0 src
-
       - name: pytest
-        run: uv run --no-sync cpu pytest
+        run: uv run --no-sync pytest

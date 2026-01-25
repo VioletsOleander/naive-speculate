@@ -22,6 +22,10 @@ repos:
       - id: ruff-format # Ruff Formatter Check
         name: Ruff Format Check
         args: [--check]
+  - repo: https://github.com/seddonym/import-linter
+    rev: v2.9
+    hooks:
+      - id: import-linter
   - repo: local
     hooks:
       - id: ty-check
