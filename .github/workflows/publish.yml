@@ -1,15 +1,17 @@
-name: uv
+name: publish
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  release:
+    types: [published]
 
 jobs:
-  ty:
+  publish:
     runs-on: ubuntu-latest
-
+    environment:
+      name: pypi
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v6
 
@@ -23,14 +25,8 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install the project
-        run: uv sync --locked --extra cpu --dev
+      - name: Build project
+        run: uv build
 
-      - name: ty check
-        run: uv run ty check
-
-      - name: pylint check
-        run: uv run pylint src
-
-      - name: pytest
-        run: uv run pytest
+      - name: Publish project
+        run: uv publish

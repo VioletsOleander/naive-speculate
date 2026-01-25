@@ -25,6 +25,8 @@ mkdocstrings
 multinomial
 println
 pylint
+pypi
+pytest
 qwen
 Qwen
 randn
