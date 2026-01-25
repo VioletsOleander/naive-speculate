@@ -9,7 +9,7 @@ dependencies = [
     "accelerate>=1.12.0",
     "huggingface-hub[cli]>=0.36.0",
     "pydantic>=2.12.5",
-    "torch>=2.9.1",
+    "torch>=2.10.0",
     "transformers>=4.57.1",
 ]
 
@@ -25,8 +25,8 @@ spec = "naive_speculate:main"
 # since by now in PyPI, torch default provide cu128 builds for linux platform,
 # so using --extra cu128 is equivalent to not using any extra at all on linux platform
 [project.optional-dependencies]
-cpu = ["torch>=2.9.1"]
-cu128 = ["torch>=2.9.1"]
+cpu = ["torch>=2.10.0"]
+cu128 = ["torch>=2.10.0"]
 
 [build-system]
 requires = ["uv_build>=0.9.10,<0.10.0"]
