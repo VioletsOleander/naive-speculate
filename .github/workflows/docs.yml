@@ -2,9 +2,8 @@ name: Build documentation and deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    # branches:
+    #   - main
 
 permissions:
   contents: read
