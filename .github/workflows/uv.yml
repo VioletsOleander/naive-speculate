@@ -26,8 +26,11 @@ jobs:
       - name: Install the project
         run: uv sync --locked --extra cpu --dev
 
-      - name: ty check
+      - name: ty-check
         run: uv run --no-sync ty check
+
+      - name: import-linter
+        run: uv run --no-sync lint-imports
 
       - name: pytest
         run: uv run --no-sync pytest
