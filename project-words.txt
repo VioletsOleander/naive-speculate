@@ -4,6 +4,7 @@ autouse
 Blockquotes
 chunkwise
 Chunkwise
+CUDA
 EDITMSG
 finfo
 fontawesome

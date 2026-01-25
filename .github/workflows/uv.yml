@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+env:
+  CUDA_VISIBLE_DEVICES: ""
+
 jobs:
   ty:
     runs-on: ubuntu-latest
