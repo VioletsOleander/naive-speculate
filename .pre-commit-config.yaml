@@ -31,6 +31,7 @@ repos:
         types: [python]
       - id: import-linter
         name: Import Linter
-        entry: uv run import-linter
+        entry: uv run lint-imports
         language: unsupported
         types: [python]
+        pass_filenames: false
