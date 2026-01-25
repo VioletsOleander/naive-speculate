@@ -12,9 +12,9 @@ permissions:
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    # environment:
+    #   name: github-pages
+    #   url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/configure-pages@v5
@@ -29,10 +29,10 @@ jobs:
         run: python scripts/generate_api_reference.py
       - name: Build documentation site
         run: uv run --no-project --with zensical --with mkdocstrings-python zensical build --clean
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: site
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
-        id: deployment
+      # - name: Upload artifact
+      #   uses: actions/upload-pages-artifact@v4
+      #   with:
+      #     path: site
+      # - name: Deploy to GitHub Pages
+      #   uses: actions/deploy-pages@v4
+      #   id: deployment
