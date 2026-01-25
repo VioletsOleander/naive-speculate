@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  ty:
+  run-hooks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
