@@ -13,11 +13,11 @@ if TYPE_CHECKING:
 
     from naive_speculate.infer import KVCache
 
-__all__ = ["LanguageModelImpl"]
+__all__ = ["LanguageModelImpl", "Qwen3LanguageModel"]
 
 
-class Qwen3Model(LanguageModel):
-    """Qwen3Model wraps huggingface Qwen3 models, implementing `LanguageModel`.
+class Qwen3LanguageModel(LanguageModel):
+    """Qwen3LanguageModel wraps huggingface Qwen3 models, implementing `LanguageModel`.
 
     Attributes:
         hf_model (Qwen3ForCausalLM): The underlying huggingface Qwen3 model.
@@ -70,4 +70,4 @@ class Qwen3Model(LanguageModel):
         return forward_out.logits
 
 
-LanguageModelImpl = Qwen3Model
+LanguageModelImpl = Qwen3LanguageModel
