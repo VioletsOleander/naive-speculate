@@ -82,6 +82,7 @@ class ChunkwiseDecodeInferencer(BasicInferencer):
 
             if eos_token_idx != -1:
                 num_excess_tokens = num_new_tokens - (eos_token_idx + 1)
+                kv_cache.crop(num_excess_tokens)
                 return DecodeOutput._make(
                     output_collection.finalize(num_tokens_trim=num_excess_tokens)
                 )
