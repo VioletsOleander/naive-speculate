@@ -24,6 +24,7 @@ layerwise
 lucide
 mkdocstrings
 multinomial
+prek
 println
 pylint
 pypi
