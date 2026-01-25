@@ -25,12 +25,10 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      - name: Install dependencies
-        run: uv add --no-sync zensical mkdocstrings-python
       - name: Generate API reference markdown files
         run: python scripts/generate_api_reference.py
       - name: Build documentation site
-        run: uv run --no-sync zensical build --clean
+        run: uv run --no-install-project --with zensical --with mkdocstrings-python zensical build --clean
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
