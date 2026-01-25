@@ -4,6 +4,7 @@ autouse
 Blockquotes
 chunkwise
 Chunkwise
+CUDA
 EDITMSG
 finfo
 fontawesome
@@ -23,8 +24,11 @@ layerwise
 lucide
 mkdocstrings
 multinomial
+prek
 println
 pylint
+pypi
+pytest
 qwen
 Qwen
 randn

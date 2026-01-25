@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: "Set up Python"
+      - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version-file: ".python-version"
@@ -26,8 +26,11 @@ jobs:
       - name: Install the project
         run: uv sync --locked --extra cpu --dev
 
-      - name: ty check
-        run: uv run ty check
+      - name: ty-check
+        run: uv run --no-sync ty check
 
-      - name: pylint check
-        run: uv run pylint src
+      - name: import-linter
+        run: uv run --no-sync lint-imports
+
+      - name: pytest
+        run: uv run --no-sync pytest
