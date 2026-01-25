@@ -1,5 +1,7 @@
 """Provide factory functions to conduct creation of various components."""
 
+# ruff: noqa: PLC0415
+
 from typing import TYPE_CHECKING
 
 from naive_speculate.config.registry import InferencerType, KVCacheType, LanguageModelType
@@ -16,7 +18,7 @@ def make_lm(model_name: str) -> LanguageModel:
     family_name = model_name.split("/")[0].lower()
     match LanguageModelType[family_name]:
         case LanguageModelType.QWEN3:
-            import naive_speculate.infer.lm.qwen3 as impl_module  # noqa: PLC0415
+            import naive_speculate.infer.lm.qwen3 as impl_module
 
     lm_class = impl_module.LanguageModelImpl
     return lm_class(model_name=model_name)
@@ -25,9 +27,9 @@ def make_lm(model_name: str) -> LanguageModel:
 def make_inferencer(language_model: LanguageModel, inferencer_type: InferencerType) -> Inferencer:
     match inferencer_type:
         case InferencerType.BASIC:
-            import naive_speculate.infer.inferencer.basic as impl_module  # noqa: PLC0415
+            import naive_speculate.infer.inferencer.basic as impl_module
         case InferencerType.CHUNKWISE:
-            import naive_speculate.infer.inferencer.chunkwise as impl_module  # noqa: PLC0415
+            import naive_speculate.infer.inferencer.chunkwise as impl_module
 
     inferencer_class = impl_module.InferencerImpl
     return inferencer_class(language_model=language_model)
@@ -44,9 +46,9 @@ def make_scorer(language_model: LanguageModel) -> Scorer:
 def make_kvcache(kvcache_type: KVCacheType) -> KVCache:
     match kvcache_type:
         case KVCacheType.DYNAMIC:
-            import naive_speculate.infer.kvcache.dynamic as impl_module  # noqa: PLC0415
+            import naive_speculate.infer.kvcache.dynamic as impl_module
         case KVCacheType.DYNAMIC_NO_UPDATE:
-            import naive_speculate.infer.kvcache.dynamic_no_update as impl_module  # noqa: PLC0415
+            import naive_speculate.infer.kvcache.dynamic_no_update as impl_module
 
     kvcache_class = impl_module.KVCacheImpl
     return kvcache_class()

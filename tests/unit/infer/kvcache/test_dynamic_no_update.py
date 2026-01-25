@@ -17,11 +17,11 @@ class TestDynamicNoUpdateCacheContract(KVCacheContractTests):
     def dynamic_no_update_cache(self) -> DynamicNoUpdateCache:
         return DynamicNoUpdateCache()
 
-    @pytest.mark.xfail(reason="DynamicNoUpdateCache does not support updates", strict=True)
     def test_dynamic_cache_update_xfail(
         self, dynamic_no_update_cache: DynamicNoUpdateCache, kv_states: list[KVState]
     ) -> None:
-        super().update_test(dynamic_no_update_cache, kv_states)
+        with pytest.raises(AssertionError):
+            super().update_test(dynamic_no_update_cache, kv_states)
 
     def test_dynamic_cache_update(
         self, dynamic_no_update_cache: DynamicNoUpdateCache, kv_states: list[KVState]
